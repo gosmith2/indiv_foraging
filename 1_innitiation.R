@@ -30,9 +30,9 @@ samp.df <- dat.clean(sampled)
 samp.df$SiteYr <- paste(samp.df$Site, substring(samp.df$Date,7,10), sep = "_")
 samp.df$SpSiteYr <- paste(samp.df$GenusSpecies, samp.df$SiteYr, sep = "_")
 
-sampReads.df <- left_join(samp.df,RBCL2018, by = 'UniqueID')
-#samp.df <- dat.dates(samp.df)
+sampAll.df <- left_join(samp.df,RBCL2018, by = 'UniqueID')
 
+save(sampAll.df,file='data/sampAll.RData')
 
 #length object to isolate just the reads
 len <- c((length(samp.df)+1):length(sampReads.df))
