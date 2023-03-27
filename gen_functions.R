@@ -1,7 +1,9 @@
-#Functions
+# This file contains functions used in the script 3_analysis
 
 
 fix.white.space <- function(d) {
+  #cleans character data by removing white space
+  
   d <- as.character(d)
   remove.first <- function(s) substr(s, 2, nchar(s))
   d <- gsub("      ", " ", d, fixed=TRUE)
@@ -19,6 +21,8 @@ fix.white.space <- function(d) {
 }
 
 dat.clean <- function(spec.dat) {
+  #cleans data of common issues from and formatting and blanks
+
   spec.dat$GenusSpecies <- fix.white.space(paste(spec.dat$Genus,
                                                  spec.dat$Species,
                                                  spec.dat$SubSpecies))
@@ -36,6 +40,8 @@ dat.clean <- function(spec.dat) {
 }
 
 dat.dates <- function(spec.dat) {
+  #cleans date data by reformatting
+  
   spec.dat$Date <- as.Date(spec.dat$Date, format='%m/%d/%y')
   spec.dat$Doy <- as.numeric(strftime(spec.dat$Date, format='%j'))
   spec.dat$Year <- as.numeric(format(spec.dat$Date,'%Y'))
@@ -43,6 +49,8 @@ dat.dates <- function(spec.dat) {
 }
 
 dat.rm.blanks <- function(spec.dat) {
+  #cleans character data by removing blanks
+
   spec.dat <- spec.dat[spec.dat$PlantGenusSpecies != "",]
   spec.dat <- spec.dat[spec.dat$GenusSpecies != "",]
   return(spec.dat)
@@ -72,7 +80,6 @@ illumSplit <- function(data,split,len){
   return(splitList)
 }
 
-#not currently used
 netSums <- function(data, binary=FALSE){
   #takes a list of network objects (e.g., from 
   #illumSplit) and calculates summary stats using 
@@ -174,6 +181,7 @@ vazSub <- function(data, threshold, obs = FALSE, binary){
 
 
 vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) { 
+  ##sub-function
 
   #down to species
   net <- lapply(data,function(y){
@@ -206,6 +214,8 @@ vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) {
 
 
 splvl.dfer <- function(data){ 
+  #builds a df from species level metrics
+
   do.call(rbind,lapply(c(1:length(data)),function(x){
   
   iteration <- data[[x]]
@@ -228,7 +238,8 @@ splvl.dfer <- function(data){
 }
 
 splvl.Zer <- function(data, split){
-  
+  #generates a summary z score df from species level network metrics
+
   do.call(rbind,lapply(unique(data[,split]),function(x){
   inter <- subset(data,data[,split]==x)
   
@@ -259,8 +270,17 @@ splvl.Zer <- function(data, split){
 )
 }
 
+zscorer <- function(data, score){
+  #sub-function; calculates z scores
+  max <- max(data[,score],na.rm=T)
+  mean <- mean(data[,score],na.rm=T)
+  sd <- sd (data[,score],na.rm=T)
+  return((max-mean)/sd)
+}
 
 build.spNet <- function(data){
+  #sumarizes species level metrics and builds a df
+
   lapply(data,function(x){
   sps <- lapply(x,function(y){
     sp <- as.data.frame(rowSums(y))
@@ -272,6 +292,8 @@ build.spNet <- function(data){
 }
 
 sum.spNet <- function(data){
+  #summarizes / reorganizes species level network metrics
+
   do.call(rbind,lapply(spNets,function(x){
   #node stats for each sp*site*yr combo
   site <- specieslevel(x)
@@ -283,6 +305,11 @@ sum.spNet <- function(data){
 }
 
 build.netlvl<- function(data,metrics, weighted=TRUE){
+  #Builds a df of network level metrics from raw observation data 
+    #data = list of sites, each of which has observations intended to become a network
+    #metrics = list of metrics you  want to calculate
+    #weighted = whether you want appropriate metrics to be weighted
+  
   ls <- lapply(data, function(x){
     nets <- mclapply(x,function(y){
       mets <- as.data.frame(networklevel(y, metrics, weighted=weighted))
@@ -304,7 +331,8 @@ build.netlvl<- function(data,metrics, weighted=TRUE){
 } 
 
 netlvl.Zer <- function(data){
-  
+  #generates a summary z score df from network level metrics
+
   do.call(rbind,lapply(unique(data$SiteYr),function(x){
   site <- subset(data, data$SiteYr==x)
   metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
@@ -386,7 +414,8 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
 
 
 calc.Z <- function(data, split){
-  
+    #calculates z scores
+
   do.call(rbind,lapply(unique(data[,split]),function(x){
     site <- data[(data[,split]==x),]
     metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
@@ -431,7 +460,8 @@ nullweb = function(ref)
 
 
 colLister <- function(data){
-  
+    #categorizes bee species for this dataset into colors
+
   cols <- lapply(data,function(x){
     if(str_detect(x,"Melissodes agilis")==TRUE){
       col <- "blue"
@@ -515,6 +545,8 @@ basSub <- function(data, threshold, obs = FALSE, binary){
 
 
 vaznull.fast <- function(web) {
+  #a faster calculation of vazquez nulls for networks
+
   rs.p <- rowSums(web)/sum(web)
   cs.p <- colSums(web)/sum(web)
   P <- P1 <- tcrossprod(rs.p, cs.p)
@@ -553,4 +585,179 @@ vaznull.fast <- function(web) {
       table(add)
   }
   finalmat
+}
+
+netToDisper <- function(data, meta, label){
+  #calculates dispersion (in this case centroid distance) from network objects
+  #meta refers to a larger dataset containing metadata for the specimens, not currently used
+  #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
+  
+  sites <- lapply(names(data), function(x){
+    site.net <- data[[x]] 
+    ids <- colnames(site.net)
+    
+    sp.ls <- meta$GenusSpecies[meta$UniqueID %in% ids]
+    
+    dis <- betadisper(vegdist(t(site.net),na.rm=T),sp.ls,type='centroid')
+    
+    avgs <- lapply(unique(dis$group), function(y){
+      avgDist <- mean(dis$distances[dis$group==y])
+      n <- length(dis$distances[dis$group==y])
+      site.data <- data.frame('GenusSpecies'=y,
+                              'avgDist' = avgDist,
+                              'n' = n)
+      return(site.data)
+    })
+    
+    site.dat <- do.call(rbind,avgs)
+    
+    site.dat$site <- x
+    site.dat$label <- label
+    print(x)
+    return(site.dat)
+  })
+  
+  return(do.call(rbind,sites))
+  
+}
+
+netToDisperAll <- function(data, label){
+  #calculates dispersion (in this case centroid distance) from network objects
+  #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
+  
+  sites <- lapply(names(data), function(x){
+    site.net <- data[[x]] 
+    col.length <- length(colnames(site.net))
+    
+    dis <- betadisper(vegdist(t(site.net),na.rm=T),
+                      group=as.factor(rep('sp',times=col.length)),
+                      type='centroid')
+    
+    site.data <- data.frame('site' = x,
+                            'avgDist' = mean(dis$distances),
+                            'n' = length(dis$distances),
+                            'label' = label)
+    return(site.data)
+  })
+  
+  return(do.call(rbind,sites))
+  
+}
+
+netTohub <- function(data,sitelist){
+  #calculates hub score metrics for each network within a "sitelist" object
+  #metrics include degree, closeness, and a number of network motifs describing
+  #highly asymmetrical node arrangements
+  #NOTE: only degree is used in analyses; the motifs (bmotif::mcount) seems to 
+  #depricated
+  sites <- lapply(sitelist,function(x){
+    mets <- specieslevel(data[[x]],index=c('degree','closeness'))
+    plants <- mets$'lower level'
+    site <- data.frame('site' = x,'clustering' = max(clustering_local_tm(data[[x]])$lc,na.rm=T))
+    
+    
+    df.met <- do.call(cbind,lapply(c('degree','weighted.closeness'),function(y){
+      met <- data.frame(y = zscorer(plants,y))
+      names(met) <- y
+      return(met)
+    }))
+    
+    site <- cbind(site,df.met)
+    
+    motifs <- mcount(data[[x]],
+                     six_node = T,
+                     normalisation = T,
+                     mean_weight = T,
+                     standard_dev = F)
+    
+    site$M44 <- (motifs$mean_weight[44] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+    site$M38 <- (motifs$mean_weight[38] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+    site$M17 <- (motifs$mean_weight[17] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+    site$M13 <- (motifs$mean_weight[13] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+    
+    site$M44f <- (motifs$frequency[44] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+    site$M38f <- (motifs$frequency[38] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+    site$M17f <- (motifs$frequency[17] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+    site$M13f <- (motifs$frequency[13] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+    
+    return(site)
+  })
+  do.call(rbind,sites)
+}
+
+## GGPLOT THEMES
+
+#Call a specific set of ggplot theme elements
+theme_dark_black <- function(base_size=14, base_family="sans") {
+  library(grid)
+  library(ggthemes)
+  (theme_foundation(base_size=base_size, base_family=base_family)
+    + theme(plot.title = element_text(face = "bold", colour = '#ffffb3',
+                                      size = rel(1.2), hjust = 0.5, margin = margin(0,0,20,0)),
+            text = element_text(),
+            panel.background = element_rect(colour = NA, fill = 'black'),
+            plot.background = element_rect(colour = NA, fill = 'black'),
+            panel.border = element_rect(colour = NA),
+            axis.title = element_text(face = "bold",size = rel(1), colour = 'white'),
+            axis.title.y = element_text(angle=90,vjust =2),
+            axis.title.x = element_text(vjust = -0.2),
+            axis.text = element_text(colour = 'white'),
+            axis.line.x = element_line(colour="white"),
+            axis.line.y = element_line(colour="white"),
+            axis.ticks = element_line(colour="white"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            legend.position = "none",
+            legend.background = element_rect(fill ='black'),
+            legend.text = element_text(color = 'white'),
+            legend.key = element_rect(colour = NA, fill = 'black'),
+            ## legend.position = "bottom",
+            legend.direction = "horizontal",
+            legend.box = "vetical",
+            legend.key.size= unit(0.5, "cm"),
+            #legend.margin = unit(0, "cm"),
+            legend.title = element_text(face="italic", colour = 'white'),
+            plot.margin=unit(c(10,5,5,5),"mm"),
+            strip.background=element_rect(colour="#2D3A4C",fill="black"),
+            strip.text = element_text(face="bold", colour =
+                                        'white')
+    ))
+}
+
+#Call a specific set of ggplot theme elements
+theme_ms <- function(base_size=14, base_family="sans") {
+  library(grid)
+  library(ggthemes)
+  (theme_foundation(base_size=base_size, base_family=base_family)
+    + theme(plot.title = element_text(face = "bold", colour = '#ffffb3',
+                                      size = rel(1.2), hjust = 0.5,
+                                      margin = margin(0,0,20,0)),
+            text = element_text(),
+            panel.background = element_rect(colour = NA, fill = 'white'),
+            plot.background = element_rect(colour = NA, fill = 'white'),
+            panel.border = element_rect(colour = NA),
+            axis.title = element_text(face = "bold",size = rel(1), colour = 'black'),
+            axis.title.y = element_text(angle=90,vjust =2),
+            axis.title.x = element_text(vjust = -0.2),
+            axis.text = element_text(colour = 'black'),
+            axis.line.x = element_line(colour="black"),
+            axis.line.y = element_line(colour="black"),
+            axis.ticks = element_line(colour="black"),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            ##legend.position = "none",
+            legend.background = element_rect(fill ='white'),
+            legend.text = element_text(color = 'black'),
+            legend.key = element_rect(colour = NA, fill = 'white'),
+            legend.position = "right",
+            legend.direction = "vertical",
+            legend.box = "vetical",
+            legend.key.size= unit(0.5, "cm"),
+            #legend.margin = unit(0, "cm"),
+            legend.title = element_text(face="italic", colour = 'black'),
+            plot.margin=unit(c(10,5,5,5),"mm"),
+            strip.background=element_rect(colour="#2D3A4C",fill="white"),
+            strip.text = element_text(face="bold", colour =
+                                        'black')
+    ))
 }
