@@ -1,29 +1,11 @@
 #Analysis of bee individual - plant species networks from FFAR 2019
   #field data
 
+  #Requires packages found in 1_packages, and loads functions from 2_functions
 
-rm(list=ls())
-
-#load libraries
-library(bipartite)
-library(vegan)
-library(nlme)
-library(lme4)
-library(lmerTest)
-library(tidyverse)
-library(tnet)
-library(bmotif)
-library(sciplot)
-library(ggtheme)
-library(ggplot2)
-library(viridis)
-library(evolvability)
-library(MuMIn)
 
 #load functions
-source('net_functions.R')
-source('gen_functions.R')
-source('ggplotThemes.R')
+source('2_functions.R')
 
 #load network data
 load('data/rbclNets.RData')
@@ -74,6 +56,7 @@ bin_micro_dis <- netToDisper(bin_micro,spec,'micro')
 
 ##visualize relative abun of bacterial sp
 #plot(rowSums(indivNet_micro[[1]],na.rm=T))
+
 
 ## --- number of microbes/plants present in diff percentages of the sample (Table3)
 
@@ -176,29 +159,6 @@ cor.lme.filtHB <- lme(microDist~rbclDist,data=comp.filt, random=~1|GenusSpecies,
 summary(cor.lme.filtHB)
 
 
-cor.lme.filt.lme4 <- lmer(microDist~rbclDist+(1+rbclDist|GenusSpecies),
-                          data=comp.filtNHB,
-                          control = lmerControl(optimizer = 'bobyqa')
-)
-summary(cor.lme.filt.lme4)
-#w/o random slope too, the lme4 one gives basically same result as nlme.
-#but with the random slope, effect goes away
-
-#plot of microbial 
-ggplot(comp.filtNHB,aes(x=rbclDist,y=microDist,col=GenusSpecies))+
-  geom_point() +
-  geom_smooth(method=lm,se=F)+
-  geom_smooth(method=lm,se=F,formula=y~x)+
-  #  geom_smooth(method=lm,aes=(x=quant_dist5[quant_dist5$label=='rbcl',]$degree, quant_dist5[quant_dist5$label=='rbcl',]$y=avgDist))+
-  ylab("Average distance to microbe centroid")+
-  theme(panel.background = NULL,
-        axis.text.x=element_text(size=12,angle=45,hjust=1),
-        axis.text.y=element_text(size=12),
-        axis.title=element_text(size=14),
-        legend.title=element_blank())+
-  xlab("Average distance to plant centroid")
-
-
 ####--------
 #Repeating the above with Core baceria only 
 ####--------
@@ -232,8 +192,7 @@ comp.core$GenusSpecies <- word(comp.core$obs,1,sep="_")
 comp.core.filt <- droplevels(comp.core[comp.core$microN>4 & comp.core$rbclN>4,])
 
 
-#RES 4: core bact only, no zeros
-#NEW 4: no qual change
+#Result: no qual change
 core.lme.filt <- lme(microDist~rbclDist,data=comp.core.filt, random=~1|GenusSpecies,na.action=na.omit,subset=comp.core.filt$rbclDist>0)
 summary(core.lme.filt)
 #rbcl dist correlated with core micro dist
@@ -247,6 +206,9 @@ summary(core.lme.filt)
 
 #takes list of networks, calculates the different potential hubbyness metrics for each
 huby <- netTohub(indivNet_rbcl1,names(indivNet_rbcl1))
+  #note: bmotif::mcount seems to be deprecated and are no longer used below 
+      #(but are still in the functions). Degree provided a better hubbyness metric
+      #than motif composition.
 save(huby,file='data/huby.RData')
 load('data/huby.RData')
 
@@ -259,31 +221,38 @@ quant_dist$degree <- huby$degree[match(quant_dist$site,huby$site)]
 quant_dist5$degree <- huby$degree[match(quant_dist5$site,huby$site)]
 quant_dist5NHB$degree <- huby$degree[match(quant_dist5NHB$site,huby$site)]
 
-#to visualize networks:
-par(mfrow=c(1,1),mai=c(.1,.1,.1,.1))
-lapply(indivNet_rbcl1[c(2,5)],function(x){plotweb(x)})
-lapply(indivNet_rbcl1[c(5)],function(x){plotweb(x, text.rot=90)})
+
+#Figure 1: visualizing networks with high (top) to low (bottom) hub scores
+par(mfrow=c(3,1),mai=c(.1,.1,.1,.1))
+lapply(indivNet_rbcl1[c(2,5,9)],function(x){plotweb(x)})
+#lapply(indivNet_rbcl1[c(5)],function(x){plotweb(x, text.rot=90)})
 par(mfrow=c(1,1))
 
+##to plot them individually (to better see species labels):
+#plotweb(indivNet_rbcl1[[2]],text.rot=90)
 
-par(mfrow=c(4,4))
-lapply(indivNet_rbcl1,function(x){plotweb(x)})
-par(mfrow=c(1,1))
+##to visualize all networks:
+#par(mfrow=c(4,4))
+#lapply(indivNet_rbcl1,function(x){plotweb(x)})
+#par(mfrow=c(1,1))
 
 #if par is funny and doesnt have axis labels after above:
 dev.off()
 
-barplot(huby$degree,ylab='Max Degree z-scrore')
-#honestly degree seems to agree best with my gut of what hubyness is....
+##To visualize degree hub score
+#barplot(huby$degree,ylab='Max Degree z-scrore'
 
 
+####
+#Effect of Hubbyness on variability:
+####
 
-#RESULT 2
+#Model without phylogenetic correction (not presented)
 huby5.lme4 <- lmer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|site),
                    data=quant_dist5NHB,
                    control = lmerControl(optimizer = 'bobyqa')
 )
-#ok, pretty interesting here. no main effect of netDeg BUT
+#no main effect of netDeg BUT
 #sig effect of rbcl, such that its higher than micro (rbcl more variable)
 #sig interaction of rbcl with netDeg, such that low netDeg <-> high avgDist 
 #getting rid of HB (by removing "NHB" from the df) also doesn't change it qual
@@ -308,7 +277,9 @@ summary(huby5.almer)
 ##another representation of the pattern: flat for micro, downsloping for rbcl
 #bargraph.CI(response=avgDist,x.factor=label,group=degree,data=quant_dist5)
 
-ggplot(quant_dist5NHB[quant_dist5NHB$label=='rbcL',],aes(x=degree,y=avgDist,col=GenusSpecies))+
+
+#Figure 2 A: rbcL (plant) variation by hub score
+ggplot(quant_dist5NHB[quant_dist5NHB$label=='rbcl',],aes(x=degree,y=avgDist,col=GenusSpecies))+
   scale_color_viridis(discrete=TRUE)+
   theme_ms() +
   geom_point() +
@@ -317,6 +288,8 @@ ggplot(quant_dist5NHB[quant_dist5NHB$label=='rbcL',],aes(x=degree,y=avgDist,col=
   ylab("Average distance to rbcL centroid (within species)")+
   xlab("Z-score of maximum plant degree")
 
+
+#Figure 2 B: microbial variation by hub score
 ggplot(quant_dist5NHB[quant_dist5NHB$label=='micro',],aes(x=degree,y=avgDist,col=GenusSpecies))+
   scale_color_viridis(discrete=TRUE)+
   theme_ms() +
@@ -326,33 +299,6 @@ ggplot(quant_dist5NHB[quant_dist5NHB$label=='micro',],aes(x=degree,y=avgDist,col
   ylab("Average distance to 16s centroid (within species)")+
   xlab("Z-score of maximum plant degree")
 
-
-ggplot(quant_dist5NHB[quant_dist5NHB$label=='micro',],aes(x=degree,y=avgDist,col=GenusSpecies))+
-  geom_point() +
-  geom_smooth(method=lm,se=F)+
-  ylab("Average distance to microbe centroid (within species)")+
-  xlab("Z-score of maximum plant degree")+
-  ylim(c(-.03,0.61))
-
-
-#
-######-------network-level dispersion
-
-##i.e., rather than avg dispersion w/in each species, is the TOTAL dispersion
-##(avg distance for all indivs regardless of sp) different by max deg zscore?
-
-#rbcl.netlvl <- netToDisperAll(indivNet_rbcl,'rbcl')
-#micro.netlvl <- netToDisperAll(indivNet_micro,'micro')
-#netlvl.all <- rbind(rbcl.netlvl,micro.netlvl)
-#netlvl.all$degree <- huby$degree[match(netlvl.all$site,huby$site)]
-
-#rbcl_all.lm <- lm(avgDist~degree*label,data=netlvl.all)
-#summary(rbcl_all.lm)
-
-#ggplot(netlvl.all,aes(x=degree,y=avgDist,col=label))+
-#  geom_point()+
-#  geom_smooth(method=lm,se=F)+
-#  ylab("Average distance to centroid (across species)")+
 #  xlab("Z-score of maximum plant degree")
 
 
