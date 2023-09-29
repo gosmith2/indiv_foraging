@@ -1,9 +1,9 @@
 # This file contains functions used in the script 3_analysis
 
+'%!in%' <- function(x,y)!('%in%'(x,y))
 
 fix.white.space <- function(d) {
   #cleans character data by removing white space
-  
   d <- as.character(d)
   remove.first <- function(s) substr(s, 2, nchar(s))
   d <- gsub("      ", " ", d, fixed=TRUE)
@@ -22,7 +22,6 @@ fix.white.space <- function(d) {
 
 dat.clean <- function(spec.dat) {
   #cleans data of common issues from and formatting and blanks
-
   spec.dat$GenusSpecies <- fix.white.space(paste(spec.dat$Genus,
                                                  spec.dat$Species,
                                                  spec.dat$SubSpecies))
@@ -41,7 +40,6 @@ dat.clean <- function(spec.dat) {
 
 dat.dates <- function(spec.dat) {
   #cleans date data by reformatting
-  
   spec.dat$Date <- as.Date(spec.dat$Date, format='%m/%d/%y')
   spec.dat$Doy <- as.numeric(strftime(spec.dat$Date, format='%j'))
   spec.dat$Year <- as.numeric(format(spec.dat$Date,'%Y'))
@@ -50,12 +48,10 @@ dat.dates <- function(spec.dat) {
 
 dat.rm.blanks <- function(spec.dat) {
   #cleans character data by removing blanks
-
   spec.dat <- spec.dat[spec.dat$PlantGenusSpecies != "",]
   spec.dat <- spec.dat[spec.dat$GenusSpecies != "",]
   return(spec.dat)
 }
-
 
 
 illumSplit <- function(data,split,len){
@@ -147,42 +143,42 @@ vazSub <- function(data, threshold, obs = FALSE, binary){
       rownames(vaz[[1]]) <- rownames(sp)
       colnames(vaz[[1]]) <- colnames(sp)
       return(vaz[[1]])
-    
-      } else {
-        sp <- data[(rowSums(data)>0),]
-        bin <- ifelse(sp>0,1,0)
-        vaz <- vaznull(1,bin)
-        rownames(vaz[[1]]) <- rownames(sp)
-        colnames(vaz[[1]]) <- colnames(sp)
-        return(vaz[[1]])
-        }
-
-    } else if(all(dim(data)>1)){
-      if(binary==FALSE){
-        sp <- data[(rowSums(data)>0),]
-        return(sp)
-      } else{
-        sp <- data[(rowSums(data)>0),]
-        bin <- ifelse(sp>0,1,0)
-        return(bin)
-      }
-     
+      
     } else {
-      if(binary==FALSE){
-        sp <- data
-        return(sp)
-      } else{
-        sp <- data
-        bin <- ifelse(data>0,1,0)
-        return(bin)
-      }
+      sp <- data[(rowSums(data)>0),]
+      bin <- ifelse(sp>0,1,0)
+      vaz <- vaznull(1,bin)
+      rownames(vaz[[1]]) <- rownames(sp)
+      colnames(vaz[[1]]) <- colnames(sp)
+      return(vaz[[1]])
     }
+    
+  } else if(all(dim(data)>1)){
+    if(binary==FALSE){
+      sp <- data[(rowSums(data)>0),]
+      return(sp)
+    } else{
+      sp <- data[(rowSums(data)>0),]
+      bin <- ifelse(sp>0,1,0)
+      return(bin)
+    }
+    
+  } else {
+    if(binary==FALSE){
+      sp <- data
+      return(sp)
+    } else{
+      sp <- data
+      bin <- ifelse(data>0,1,0)
+      return(bin)
+    }
+  }
 }
 
 
 vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) { 
   ##sub-function
-
+  
   #down to species
   net <- lapply(data,function(y){
     
@@ -215,60 +211,61 @@ vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) {
 
 splvl.dfer <- function(data){ 
   #builds a df from species level metrics
-
+  
   do.call(rbind,lapply(c(1:length(data)),function(x){
-  
-  iteration <- data[[x]]
-  
-  #narrow down to site
-  site <- lapply(iteration,function(y){
-    pol <- y$'higher level'
-    pol$UniqueID <- rownames(pol)
     
-    left_join(pol,samp.df, by='UniqueID')
+    iteration <- data[[x]]
     
-  })
-  
-  sites <- do.call(rbind, site)
-  sites$iteration <- x
-  
-  return(sites)
-  
+    #narrow down to site
+    site <- lapply(iteration,function(y){
+      pol <- y$'higher level'
+      pol$UniqueID <- rownames(pol)
+      
+      left_join(pol,samp.df, by='UniqueID')
+      
+    })
+    
+    sites <- do.call(rbind, site)
+    sites$iteration <- x
+    
+    return(sites)
+    
   }))
 }
 
 splvl.Zer <- function(data, split){
   #generates a summary z score df from species level network metrics
-
+  
   do.call(rbind,lapply(unique(data[,split]),function(x){
-  inter <- subset(data,data[,split]==x)
-  
-  means <- do.call(cbind,lapply(metrics,function(y){
-    met <- unlist(lapply(unique(inter$iteration),function(z){
-      iter <- inter[inter$iteration==z,]
-      mean(iter[,y])
-    }))
-    met1 <- data.frame(y = met)
-    names(met1)<- c(y)
-    return(met1)
-  }))
-  
-  zscores <- do.call(cbind,lapply(names(means), function(x){
-    zscore <- (means[1,x] - mean(means[,x]))/
-      (sd(means[,x])+10^-10)
+    inter <- subset(data,data[,split]==x)
     
-    zscore1 <- data.frame(x = zscore)
-    names(zscore1) <- c(x)
-    return(zscore1)
+    means <- do.call(cbind,lapply(metrics,function(y){
+      met <- unlist(lapply(unique(inter$iteration),function(z){
+        iter <- inter[inter$iteration==z,]
+        mean(iter[,y])
+      }))
+      met1 <- data.frame(y = met)
+      names(met1)<- c(y)
+      return(met1)
+    }))
+    
+    zscores <- do.call(cbind,lapply(names(means), function(x){
+      zscore <- (means[1,x] - mean(means[,x]))/
+        (sd(means[,x])+10^-10)
+      
+      zscore1 <- data.frame(x = zscore)
+      names(zscore1) <- c(x)
+      return(zscore1)
+    })
+    )
+    
+    zscores$interaction <- x
+    zscores$indivs <-length(inter$UniqueID)/length(unique(inter$iteration))
+    return(zscores)
   })
   )
-  
-  zscores$interaction <- x
-  zscores$indivs <-length(inter$UniqueID)/length(unique(inter$iteration))
-  return(zscores)
-})
-)
 }
+
 
 zscorer <- function(data, score){
   #sub-function; calculates z scores
@@ -280,35 +277,34 @@ zscorer <- function(data, score){
 
 build.spNet <- function(data){
   #sumarizes species level metrics and builds a df
-
   lapply(data,function(x){
-  sps <- lapply(x,function(y){
-    sp <- as.data.frame(rowSums(y))
+    sps <- lapply(x,function(y){
+      sp <- as.data.frame(rowSums(y))
+    })
+    sites <- do.call(cbind, sps)
+    names(sites) <- names(x)
+    return(sites)
   })
-  sites <- do.call(cbind, sps)
-  names(sites) <- names(x)
-  return(sites)
-})
 }
 
 sum.spNet <- function(data){
   #summarizes / reorganizes species level network metrics
-
   do.call(rbind,lapply(spNets,function(x){
-  #node stats for each sp*site*yr combo
-  site <- specieslevel(x)
-  hl <- site$'higher level'
-  hl$SpSiteYr <- rownames(hl)
-  rownames(hl) <- NULL
-  return(hl)
-}))
+    #node stats for each sp*site*yr combo
+    site <- specieslevel(x)
+    hl <- site$'higher level'
+    hl$SpSiteYr <- rownames(hl)
+    rownames(hl) <- NULL
+    return(hl)
+  }))
 }
+
 
 build.netlvl<- function(data,metrics, weighted=TRUE){
   #Builds a df of network level metrics from raw observation data 
-    #data = list of sites, each of which has observations intended to become a network
-    #metrics = list of metrics you  want to calculate
-    #weighted = whether you want appropriate metrics to be weighted
+  #data = list of sites, each of which has observations intended to become a network
+  #metrics = list of metrics you  want to calculate
+  #weighted = whether you want appropriate metrics to be weighted
   
   ls <- lapply(data, function(x){
     nets <- mclapply(x,function(y){
@@ -332,27 +328,26 @@ build.netlvl<- function(data,metrics, weighted=TRUE){
 
 netlvl.Zer <- function(data){
   #generates a summary z score df from network level metrics
-
   do.call(rbind,lapply(unique(data$SiteYr),function(x){
-  site <- subset(data, data$SiteYr==x)
-  metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
-    zscore <- (site[1,y] - mean(site[,y]))/
-      (sd(site[,y])+10^-10)
-    zscore1 <- data.frame(y = zscore)
-    names(zscore1) <- c(y)
-    return(zscore1)
-  })
-  
-  site.df <- do.call(cbind,metrics)
-  site.df$Site <- x
-  return(site.df)
-}))
+    site <- subset(data, data$SiteYr==x)
+    metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
+      zscore <- (site[1,y] - mean(site[,y]))/
+        (sd(site[,y])+10^-10)
+      zscore1 <- data.frame(y = zscore)
+      names(zscore1) <- c(y)
+      return(zscore1)
+    })
+    
+    site.df <- do.call(cbind,metrics)
+    site.df$Site <- x
+    return(site.df)
+  }))
 }
 
 
 build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weighted=TRUE){
   #returns single dataframe of summary stats for each spsiteyr with more indivs than the threshold  
-
+  
   iter <- c(1:iterations)
   
   observed <- lapply(data,function(x){
@@ -369,13 +364,13 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
     thresh <- lapply(data,function(y){
       sp <- lapply(y,function(z){
         if(length(colnames(z))>=threshold){
-        vazSub(z, obs=FALSE,threshold=threshold,binary=binary)
+          vazSub(z, obs=FALSE,threshold=threshold,binary=binary)
         }
         
-        })
-      sp <- sp %>% discard(is.null)
       })
+      sp <- sp %>% discard(is.null)
     })
+  })
   
   nets.ls <- list(observed)
   nets.ls <- c(nets.ls,net.ls)
@@ -386,18 +381,18 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
     site <- lapply(x,function(y){
       sps <- lapply(y,function(z){
         sp <- as.data.frame(networklevel(z,metrics, weighted=weighted))
-        })
+      })
       sps1 <- do.call(cbind,sps) 
       names(sps1) <- names(y)
       sps.df <- as.data.frame(t(sps1))
       sps.df$SpSiteYr <- rownames(sps.df)
       rownames(sps.df) <- NULL
       return(sps.df)
-      })
+    })
     
     sites.df <- do.call(rbind,site)
     
-    })
+  })
   
   len <- c(1:length(sums))
   
@@ -410,12 +405,11 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
   
   return(all)
 }
-  
+
 
 
 calc.Z <- function(data, split){
-    #calculates z scores
-
+  #calculates z scores
   do.call(rbind,lapply(unique(data[,split]),function(x){
     site <- data[(data[,split]==x),]
     metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
@@ -460,8 +454,7 @@ nullweb = function(ref)
 
 
 colLister <- function(data){
-    #categorizes bee species for this dataset into colors
-
+  #categorizes bee species for this dataset into colors
   cols <- lapply(data,function(x){
     if(str_detect(x,"Melissodes agilis")==TRUE){
       col <- "blue"
@@ -546,7 +539,6 @@ basSub <- function(data, threshold, obs = FALSE, binary){
 
 vaznull.fast <- function(web) {
   #a faster calculation of vazquez nulls for networks
-
   rs.p <- rowSums(web)/sum(web)
   cs.p <- colSums(web)/sum(web)
   P <- P1 <- tcrossprod(rs.p, cs.p)
@@ -557,7 +549,7 @@ vaznull.fast <- function(web) {
     selc <- floor((sel - 1)/(dim(web)[1])) + 1
     selr <- ((sel - 1)%%dim(web)[1]) + 1
     if (sum(finalmat[, selc]) == 0 | sum(finalmat[selr,
-                                                  ]) == 0) {
+    ]) == 0) {
       finalmat[sel] <- 1
       P[sel] <- 0
     }
@@ -593,28 +585,47 @@ netToDisper <- function(data, meta, label){
   #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
   
   sites <- lapply(names(data), function(x){
+    #print(x)
+    #browser()
     site.net <- data[[x]] 
     ids <- colnames(site.net)
     
     sp.ls <- meta$GenusSpecies[meta$UniqueID %in% ids]
     
-    dis <- betadisper(vegdist(t(site.net),na.rm=T),sp.ls,type='centroid')
+    if(length(sp.ls)>0){
+      dis <- betadisper(vegdist(t(site.net),na.rm=T),sp.ls,type='centroid')
+      
+      avgs <- lapply(unique(dis$group), function(y){
+        avgDist <- mean(dis$distances[dis$group==y])
+        len <- length(dis$distances[dis$group==y])
+        #browser()
+        site.data <- data.frame('GenusSpecies'=y,
+                                'avgDist' = avgDist,
+                                'n' = len)
+        return(site.data)
+      })
+      
+      site.dat <- do.call(rbind,avgs)
+      
+      site.dat$site <- x
+      site.dat$label <- label
+      print(x)
+      return(site.dat)
+      
+    } else {
+      site.dat <- data.frame('GenusSpecies'=NA,
+                             'avgDist' = NA,
+                             'n' = NA,
+                             "site" = x,
+                             "label" = label)
+      return(site.dat)
+    }
     
-    avgs <- lapply(unique(dis$group), function(y){
-      avgDist <- mean(dis$distances[dis$group==y])
-      n <- length(dis$distances[dis$group==y])
-      site.data <- data.frame('GenusSpecies'=y,
-                              'avgDist' = avgDist,
-                              'n' = n)
-      return(site.data)
-    })
-    
-    site.dat <- do.call(rbind,avgs)
-    
-    site.dat$site <- x
-    site.dat$label <- label
     print(x)
-    return(site.dat)
+    #if(length(dis)>0){
+    #  print("yup")
+    #}
+    
   })
   
   return(do.call(rbind,sites))
@@ -664,21 +675,35 @@ netTohub <- function(data,sitelist){
     
     site <- cbind(site,df.met)
     
-    motifs <- mcount(data[[x]],
-                     six_node = T,
-                     normalisation = T,
-                     mean_weight = T,
-                     standard_dev = F)
+    #motifs <- mcount(data[[x]],
+    #                 six_node = T,
+    #                 normalisation = T,
+    #                 mean_weight = T,
+    #                 standard_dev = F)
     
-    site$M44 <- (motifs$mean_weight[44] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
-    site$M38 <- (motifs$mean_weight[38] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
-    site$M17 <- (motifs$mean_weight[17] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
-    site$M13 <- (motifs$mean_weight[13] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+    #site$M44 <- (motifs$mean_weight[44] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+    #site$M38 <- (motifs$mean_weight[38] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+    #site$M17 <- (motifs$mean_weight[17] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+    #site$M13 <- (motifs$mean_weight[13] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
     
-    site$M44f <- (motifs$frequency[44] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
-    site$M38f <- (motifs$frequency[38] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
-    site$M17f <- (motifs$frequency[17] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
-    site$M13f <- (motifs$frequency[13] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+    #site$M44f <- (motifs$frequency[44] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+    #site$M38f <- (motifs$frequency[38] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+    #site$M17f <- (motifs$frequency[17] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+    #site$M13f <- (motifs$frequency[13] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+    
+    return(site)
+  })
+  do.call(rbind,sites)
+}
+
+netToDeg <- function(data,sitelist){
+  #calculates hub score metric (relative degree) for each network within a "sitelist" object
+  sites <- lapply(sitelist,function(x){
+    mets <- specieslevel(data[[x]],index=c('degree'))
+    plants <- mets$'lower level'
+    deg <- zscorer(plants,'degree')
+    site <- data.frame('site' = x,"HubDegree" = deg,"plantN" = dim(data[[x]])[[1]],"polN" = dim(data[[x]])[[2]])
+    
     
     return(site)
   })
@@ -760,4 +785,171 @@ theme_ms <- function(base_size=14, base_family="sans") {
             strip.text = element_text(face="bold", colour =
                                         'black')
     ))
+}
+
+#split site-level networks into site+sample round networks
+SRsplit <- function(network.list,meta=spec){
+  newlist <- do.call(c,lapply(names(network.list),function(x){
+    #browser()
+    #narrow down to just the right site-level network
+    site <- network.list[[x]] 
+    
+    rounds <- lapply(unique(meta$SiteSample[meta$Site==x]), function(y){
+      
+      #subset that site network to just specimens collected during a given sample round
+      siteround <- site[,colnames(site) %in% meta$UniqueID[meta$SiteSample==y]]
+      
+      #drop empty plant levels (but don't break for 1 weird case). EDIT: commented out, not necessary. doesn't change calculations
+      #if(length(colnames(siteround))>0){
+      #  siteround <- siteround[rowSums(siteround)>0,]
+      #}
+      
+      #browser()
+      print(y)
+      #print(dim(siteround))
+      return(siteround)
+    })
+    #name the objects in the rounds list
+    #browser()
+    names(rounds) <- unique(meta$SiteSample[meta$Site==x])
+    
+    #remove any networks with dim 0 (i.e., no pollinators)
+    clean.ls <- unlist(lapply(rounds, function(z){
+      if(length(colnames(z))==0){
+        return(FALSE)
+      }else{
+        if(dim(z)[[2]]==0){
+          return(FALSE)
+        }else{
+          return(TRUE)
+        }
+      }
+      
+    }))
+    rounds <- rounds[clean.ls]                     
+    
+    return(rounds)
+  }))
+  return(newlist)
+}
+BloomSplit <- function(network.list,meta=spec){
+  newlist <- do.call(c,lapply(names(network.list),function(x){
+    #browser()
+    #narrow down to just the right site-level network
+    site <- network.list[[x]] 
+    
+    rounds <- lapply(unique(meta$SiteBloom[meta$Site==x]), function(y){
+      
+      #subset that site network to just specimens collected during a given sample round
+      bloomround <- site[,colnames(site) %in% meta$UniqueID[meta$SiteBloom==y]]
+      
+      #drop empty plant levels (but don't break for 1 weird case). EDIT: commented out, not necessary. doesn't change calculations
+      #if(length(colnames(siteround))>0){
+      #  siteround <- siteround[rowSums(siteround)>0,]
+      #}
+      
+      #browser()
+      print(y)
+      #print(dim(siteround))
+      return(bloomround)
+    })
+    #name the objects in the rounds list
+    #browser()
+    names(rounds) <- unique(meta$SiteBloom[meta$Site==x])
+    
+    #remove any networks with dim 0 (i.e., no pollinators)
+    clean.ls <- unlist(lapply(rounds, function(z){
+      if(length(colnames(z))==0){
+        return(FALSE)
+      }else{
+        if(dim(z)[[2]]==0){
+          return(FALSE)
+        }else{
+          return(TRUE)
+        }
+      }
+      
+    }))
+    rounds <- rounds[clean.ls]                     
+    
+    return(rounds)
+  }))
+  return(newlist)
+}
+
+dis_combiner <- function(dfmicro,dfplant){
+  #reorganize the dataframes
+  micro.df <- data.frame('obs' = paste(dfmicro$GenusSpecies, dfmicro$site, sep=":"),
+                         'microDist' = dfmicro$avgDist,
+                         'microN' = dfmicro$n)
+  rbcl.df <- data.frame('obs' = paste(dfplant$GenusSpecies, dfplant$site, sep=":"),
+                        'rbclDist' = dfplant$avgDist,
+                        'rbclN' = dfplant$n)
+  
+  
+  #combine them into a single df, add a couple organizer columns
+  comp <- full_join(micro.df,rbcl.df)
+  #browser()
+  comp$site <- word(comp$obs,2,sep=":")
+  comp$GenusSpecies <- word(comp$obs,1,sep=":")
+  return(comp)
+}
+
+
+MRMrunner <- function(sitelist, spec.data, rbcl, micro, bees){
+  siteSR.list <- do.call(rbind,lapply(sitelist,function(x){
+    print(x)
+    #browser()
+    
+    ID.list <- spec.data$UniqueID[spec.data$SiteSample==x]
+    
+    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
+      
+      res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
+      
+    }else{
+      
+      rbcl.filt <- rbcl[rownames(rbcl)%in%ID.list,colnames(rbcl)%in%ID.list]
+      micro.filt <- micro[rownames(micro)%in%ID.list,colnames(micro)%in%ID.list]
+      #bees.filt <- bees[x,x]
+      
+      summary <- MRM(as.dist(micro.filt) ~ as.dist(rbcl.filt), nperm=10^4)
+      
+      res <- data.frame("site"=x,'coef' = summary$coef[2], "p" = summary$coef[4], "r2" = summary$r.squared[[1]])
+      #browser()
+    }
+    
+    return(res)
+  }))
+  
+  return(siteSR.list)
+}
+
+MRMrunnerBR <- function(sitelist, spec.data, rbcl, micro, bees){
+  siteSR.list <- do.call(rbind,lapply(sitelist,function(x){
+    print(x)
+    #browser()
+    
+    ID.list <- spec.data$UniqueID[spec.data$SiteBloom==x]
+    
+    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
+      
+      res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
+      
+    }else{
+      
+      rbcl.filt <- rbcl[rownames(rbcl)%in%ID.list,colnames(rbcl)%in%ID.list]
+      micro.filt <- micro[rownames(micro)%in%ID.list,colnames(micro)%in%ID.list]
+      #bees.filt <- bees[x,x]
+      
+      summary <- MRM(as.dist(micro.filt) ~ as.dist(rbcl.filt), nperm=10^4)
+      
+      res <- data.frame("site"=x,'coef' = summary$coef[2], "p" = summary$coef[4], "r2" = summary$r.squared[[1]])
+      #browser()
+    }
+    
+    return(res)
+  }))
+  
+  return(siteSR.list)
 }
