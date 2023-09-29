@@ -1,6 +1,6 @@
 #5_plotting: Plotting analysis resutls from bee individual - plant species 
   #networks from FFAR 2019 field data. Loads in a few objects created in 3_objects
-  #then generates plots. Requires packages within 1_packages
+  #then generates plots. Requires packages within 1_initiation
 
 
 #load in objects 
