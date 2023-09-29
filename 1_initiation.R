@@ -1,4 +1,4 @@
-## 1. Innitiation
+## 1. Initiation
 #First script of analysis for the individual foraging project
 
 
