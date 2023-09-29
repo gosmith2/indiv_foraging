@@ -1,8 +1,8 @@
 #3_objects: Construction of objects used in analysis of bee individual - plant 
   #species networks from FFAR 2019 field data
 
-#Requires packages found in 1_packages, sources in functions from 2_functions, 
-  #and loads some pre-constructed objects (networks, phylogenetic trees)
+#Requires packages found in 1_initiation, sources in functions from 2_functions, 
+  #and loads some pre-constructed objects from "data" directory (networks, phylogenetic trees)
 
 
 #load functions
