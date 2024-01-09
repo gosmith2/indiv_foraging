@@ -83,6 +83,12 @@ comm.rbcl.indiv <- makeIndivComm(spec, rbcl)
 dist.rbcl <- as.matrix(vegan::vegdist(comm.rbcl.indiv,
                                       "altGower"))
 
+##Optional for Lauren: remove honeybees from rbcl dist
+#no.apidae <- spec$UniqueID[spec$GenusSpecies=="Apis mellifera"]
+
+#dist.rbcl.NHB <- dist.rbcl[!rownames(dist.rbcl) %in% no.apidae, !colnames(dist.rbcl) %in% no.apidae]
+
+
 #make a version of the above without sunflower
 comm.rbcl.indiv.NOSF <- makeIndivComm(spec, rbcl[-37])
 dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
