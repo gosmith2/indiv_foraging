@@ -108,6 +108,14 @@ comm.rbcl.indiv <- makeIndivComm(spec, rbcl)
 dist.rbcl <- as.matrix(vegan::vegdist(comm.rbcl.indiv,
                                       "altGower"))
 
+#make a version of the above without sunflower
+comm.rbcl.indiv.NOSF <- makeIndivComm(spec, rbcl[-37])
+dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
+                                      "altGower"))
+
+save(dist.rbcl, dist.rbcl.NOSF, file="data/rbcl_dists.Rdata")
+
+
 #microbe distance------------------------
 microbes <- colnames(spec)[grepl("16s", colnames(spec))]
 
@@ -128,7 +136,7 @@ dist.phylo.microbes <- dist.phylo.microbes[
 
 save(dist.phylo.microbes, dist.microbes, file="saved/distmats/indiv_16s.Rdata")
 
-#bee distance------------------------
+#bee community distance between sites------------------------
 bee.commSB <- makeCommStructSB(spec.wild, "GenusSpecies")
 dist.beeSB <- as.matrix(vegdist(bee.commSB$comm,"gower"))
 save(dist.beeSB,file='data/dist.beeSB.RData')
@@ -204,4 +212,55 @@ quant_distSBCore5 <- quant_distSB[quant_distSBCore$n>4,]
 quant_distSBCore5NHB <- quant_distSBCore5[quant_distSBCore5$GenusSpecies!="Apis mellifera",]
 #save(quant_distSBCore5NHB,file="data/quant_distSBCore5NHB.RData")  
 
+## **********************************************************************
+## Generate bee phylogenetic distance matrix from dated tree
+## **********************************************************************
+## load the compiled tree
+dated.tree <- read.tree("data/calibees-207t-95p-spruceup-chronos-strict-clock-125Ma.tre")
 
+## cleaning so the tips match the species in the dataset
+
+dated.tree$tip.label <- gsub("_BLX\\d+", "", dated.tree$tip.label)
+
+dated.tree$tip.label <- gsub("_", " ", dated.tree$tip.label)
+
+## dated.tree <- drop.tip(dated.tree, dated.tree$tip.label[duplicated(dated.tree$tip.label)])
+
+dated.tree$tip.label[dated.tree$tip.label == "Lasioglossum spE"] <-
+  "Lasioglossum sp. e"
+dated.tree$tip.label[dated.tree$tip.label == "Sphecodes sp"] <-
+  "Sphecodes spp."
+dated.tree$tip.label[dated.tree$tip.label == "Xylocopa sp"] <-
+  "Xylocopa varipuncta"
+dated.tree$tip.label[dated.tree$tip.label == "Ashmeadiella aridula astragali"] <-
+  "Ashmeadiella sp."
+dated.tree$tip.label[dated.tree$tip.label == "Hylaeus mesillae"] <-
+  "Hylaeus morphoD"
+dated.tree$tip.label[dated.tree$tip.label == "Hylaeus rudbeckiae"] <-
+  "Hylaeus morphoC"
+dated.tree$tip.label[dated.tree$tip.label == "Hylaeus bisinuatus"] <-
+  "Hylaeus morphoA"
+dated.tree$tip.label[dated.tree$tip.label == "Hylaeus calvus"] <-
+  "Hylaeus morphoB"
+dated.tree$tip.label[dated.tree$tip.label == "Triepeolus heterurus"] <-
+  "Triepeolus sp. a"
+dated.tree$tip.label[dated.tree$tip.label == "Lasioglossum tegulare"] <-
+  "Lasioglossum tegulariforme"
+
+dated.tree$tip.label[dated.tree$tip.label == "Apis mellifera HC22"] <-
+  "Apis mellifera"
+
+no.tips <- unique(spec$GenusSpecies[!spec$GenusSpecies %in%
+                                      dated.tree$tip.label])
+
+phylo <- keep.tip(phy=dated.tree,
+                  tip= dated.tree$tip.label[dated.tree$tip.label
+                                            %in%
+                                              unique(spec$GenusSpecies)])
+
+co.var.mat <- ape::vcv.phylo(phylo)
+
+bee.dist <- cophenetic.phylo(phylo)
+
+#save(co.var.mat1, phylo, file="data/covarmatrix_community_1.Rdata")
+save(bee.dist, phylo, file = "data/bee_dist.RData")
