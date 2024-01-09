@@ -7,6 +7,7 @@
 load('data/spec_RBCL_16s.RData')
 load('data/quant_distSB5.RData')
 load('data/compSB.filtNHB.RData')
+load('data/covarmatrix_community.Rdata')
 load('data/hubySB.RData')
 load('data/indiv_16s.Rdata')
 load("data/rbcl_dists.Rdata")
@@ -81,7 +82,7 @@ MRMresultsSB.NOSFbee$bloom <- word(MRMresultsSB.NOSFbee$site,2,sep="_")
 huby5SB.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc),
                        data=quant_distSB5NHB,
                        control = lmerControl(optimizer = 'bobyqa'),
-                       A=list(GenusSpecies=A)
+                       A=list(GenusSpecies=co.var.mat)
 )
 summary(huby5SB.almer)
   #repeating this analysis with quant_distSB5NHB, quant_distSBCore5, or 
