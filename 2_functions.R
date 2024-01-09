@@ -897,6 +897,7 @@ dis_combiner <- function(dfmicro,dfplant){
 
 
 MRMrunner <- function(sitelist, spec.data, rbcl, micro, bees){
+  #Depricated version
   siteSR.list <- do.call(rbind,lapply(sitelist,function(x){
     print(x)
     #browser()
@@ -925,25 +926,30 @@ MRMrunner <- function(sitelist, spec.data, rbcl, micro, bees){
   return(siteSR.list)
 }
 
-MRMrunnerBR <- function(sitelist, spec.data, rbcl, micro, bees){
-  siteSR.list <- do.call(rbind,lapply(sitelist,function(x){
+MRMrunnerSB <- function(sitelist, spec.data, rbcl, micro, bees){
+  #This version is the old version used for the last submission, which now gives unequal matrix errors
+
+  siteSB.list <- do.call(rbind,lapply(sitelist,function(x){
     print(x)
     #browser()
     
     ID.list <- spec.data$UniqueID[spec.data$SiteBloom==x]
-    
+
+    #skip networks that are too small
     if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
       
       res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
       
     }else{
-      
+      #filter to just specimens at the given network
       rbcl.filt <- rbcl[rownames(rbcl)%in%ID.list,colnames(rbcl)%in%ID.list]
       micro.filt <- micro[rownames(micro)%in%ID.list,colnames(micro)%in%ID.list]
       #bees.filt <- bees[x,x]
-      
+
+      #Run an MRM on the filtered matrices
       summary <- MRM(as.dist(micro.filt) ~ as.dist(rbcl.filt), nperm=10^4)
-      
+
+      #extract relevant summary data into a 1 row dataframe to combine with the rest
       res <- data.frame("site"=x,'coef' = summary$coef[2], "p" = summary$coef[4], "r2" = summary$r.squared[[1]])
       #browser()
     }
@@ -951,5 +957,335 @@ MRMrunnerBR <- function(sitelist, spec.data, rbcl, micro, bees){
     return(res)
   }))
   
-  return(siteSR.list)
+  return(siteSB.list)
+}
+
+    MRMrunnerSB <- function(sitelist, spec.data, rbcl, micro, bees){
+  #New version resolving the unequal matrix size issue. Doesn't add bees to the MRM (the one below this does)
+  
+  siteSB.list <- do.call(rbind,lapply(sitelist,function(x){
+    print(x)
+    
+    ID.list <- spec.data$UniqueID[spec.data$SiteBloom==x]
+    
+    #browser()
+    #site <- spec.data[spec.data$SiteBloom==x,]
+    
+    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
+      
+      res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
+      print("skipped1")
+      
+    }else{
+      print("started")
+
+      rbcl.filt <- rbcl[rownames(rbcl)%in%ID.list,colnames(rbcl)%in%ID.list]
+      micro.filt <- micro[rownames(micro)%in%ID.list,colnames(micro)%in%ID.list]
+      
+      micro.filt.sm <- micro.filt[rownames(micro.filt)%in%rownames(rbcl.filt),colnames(micro.filt)%in%colnames(rbcl.filt)]
+      rbcl.filt.sm <- rbcl.filt[rownames(rbcl.filt)%in%rownames(micro.filt),colnames(rbcl.filt)%in%colnames(micro.filt)]
+      
+      if(length(rownames(rbcl.filt.sm))<3){
+        
+        res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
+        print("skipped2")
+        
+      } else {
+        
+        #print("filtered")
+        #browser()
+        
+        summary <- MRM(as.dist(micro.filt.sm) ~ as.dist(rbcl.filt.sm), nperm=10^4)
+        
+        res <- data.frame("site"=x,'coef' = summary$coef[2], "p" = summary$coef[4], "r2" = summary$r.squared[[1]])
+        print("tested")
+      }
+    }
+    
+    return(res)
+  }))
+  
+  return(siteSB.list)
+}
+
+MRMrunnerSBbee <- function(sitelist, spec.data, rbcl, micro, bees){
+  #Version using the new filtering and including bee phylo in the model (when there are multiple bee species present)
+  
+  siteSB.list <- do.call(rbind,lapply(sitelist,function(x){
+    print(x)
+    browser()
+    #site <- spec.data[spec.data$SiteBloom==x,]
+    
+    ID.list <- spec.data$UniqueID[spec.data$SiteBloom==x]
+    
+    #thing <- spec.data[spec.data$UniqueID%in%ID.list,c("Site","SFBloomStatus","Pollen","Gut","GenusSpecies")]
+    
+    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
+      
+      res <- data.frame("site"=x,'rbcl_coef' = NA, "rbcl_p" = NA, 'bee_coef' = NA, "bee_p" = NA,"r2"=NA)
+      print("skipped1")
+      
+    }else{
+      print("started")
+      
+      rbcl.filt <- rbcl[rownames(rbcl)%in%ID.list,colnames(rbcl)%in%ID.list]
+      micro.filt <- micro[rownames(micro)%in%ID.list,colnames(micro)%in%ID.list]
+      
+      micro.filt.sm <- micro.filt[rownames(micro.filt)%in%rownames(rbcl.filt),colnames(micro.filt)%in%colnames(rbcl.filt)]
+      rbcl.filt.sm <- rbcl.filt[rownames(rbcl.filt)%in%rownames(micro.filt),colnames(rbcl.filt)%in%colnames(micro.filt)]
+      
+      if(length(rownames(rbcl.filt.sm))<3){
+        
+        res <- data.frame("site"=x,'rbcl_coef' = NA, "rbcl_p" = NA, 'bee_coef' = NA, "bee_p" = NA,"r2"=NA)
+        print("skipped2")
+        
+      } else {
+       # browser()
+        bees.filt <- as.matrix(do.call(rbind, lapply(rownames(rbcl.filt.sm), function(x){
+          comp.list <- unlist(lapply(colnames(rbcl.filt.sm), function(y){
+            #browser()
+            x.sp <- spec.data$GenusSpecies[spec.data$UniqueID==x]
+            y.sp <- spec.data$GenusSpecies[spec.data$UniqueID==y]
+            return(bees[x.sp,y.sp])
+          }))
+        })))
+        rownames(bees.filt) <- rownames(rbcl.filt.sm)
+        colnames(bees.filt) <- rownames(rbcl.filt.sm)
+        
+        #print("filtered")
+        #browser()
+        if(all(bees.filt[1,1] == bees.filt)){
+          summary <- MRM(as.dist(micro.filt.sm) ~ as.dist(rbcl.filt.sm), nperm=10^4)
+          print("w/o bees")
+          res <- data.frame("site"=x,'rbcl_coef' = summary$coef[2], "rbcl_p" = summary$coef[4], 'bee_coef' = NA, "bee_p" = NA, "r2" = summary$r.squared[[1]])
+        } else {
+          summary <- MRM(as.dist(micro.filt.sm) ~ as.dist(rbcl.filt.sm) + as.dist(bees.filt), nperm=10^4)
+          print("w/ bees")
+          res <- data.frame("site"=x,'rbcl_coef' = summary$coef[2], "rbcl_p" = summary$coef[5], 'bee_coef' = summary$coef[3], "bee_p" = summary$coef[6], "r2" = summary$r.squared[[1]])
+          print("tested")
+        }
+       
+      }
+    }
+    
+    return(res)
+  }))
+  
+  return(siteSB.list)
+}
+
+samp2site.spp <- function(site,spp,abund) {
+    x <- tapply(abund, list(site=site,spp=spp), sum)
+    x[is.na(x)] <- 0
+    return(x)
+}
+
+makeCommStruct <- function(spec.dat, type){
+    ## prep site by species matrix
+    prep.comm <- aggregate(spec.dat[, type],
+                           list(site= spec.dat$Site,
+                                status= spec.dat$SiteType,
+                                sp= spec.dat[, type]), length)
+
+    comm <-  samp2site.spp(site= prep.comm$site,
+                           spp= prep.comm$sp, abund=
+                                                  prep.comm$x)
+    sites <- rownames(comm)
+    site.type <- spec.dat$SiteType[match(rownames(comm),
+                                         spec.dat$Site)]
+    adjsf <- spec.dat$AdjSF[match(rownames(comm),
+                                  spec.dat$Site)]
+
+    comm <- bipartite::empty(comm)
+
+    return(list(comm=comm,
+                ## sites=sites,
+                site.type = site.type,
+                adjsf = adjsf))
+}
+
+makeCommStructSR <- function(spec.dat, type){
+  ## prep site by species matrix
+  prep.comm <- aggregate(spec.dat[, type],
+                         list(site= spec.dat$SiteSample,
+                              status= spec.dat$SiteType,
+                              sp= spec.dat[, type]), length)
+  
+  comm <-  samp2site.spp(site= prep.comm$site,
+                         spp= prep.comm$sp, abund=
+                           prep.comm$x)
+  sites <- rownames(comm)
+  site.type <- spec.dat$SiteType[match(rownames(comm),
+                                       spec.dat$SiteSample)]
+  adjsf <- spec.dat$AdjSF[match(rownames(comm),
+                                spec.dat$SiteSample)]
+  comm <- bipartite::empty(comm)
+  
+  return(list(comm=comm,
+              ## sites=sites,
+              site.type = site.type,
+              adjsf = adjsf))
+}
+makeCommStructSB <- function(spec.dat, type){
+  ## prep site by species matrix
+  prep.comm <- aggregate(spec.dat[, type],
+                         list(site= spec.dat$SiteBloom,
+                              status= spec.dat$SiteType,
+                              sp= spec.dat[, type]), length)
+  #print(1)
+  comm <-  samp2site.spp(site= prep.comm$site,
+                         spp= prep.comm$sp, abund=
+                           prep.comm$x)
+  sites <- rownames(comm)
+  site.type <- spec.dat$SiteType[match(rownames(comm),
+                                       spec.dat$SiteBloom)]
+  adjsf <- spec.dat$AdjSF[match(rownames(comm),
+                                spec.dat$SiteBloom)]
+  comm <- bipartite::empty(comm)
+  
+  return(list(comm=comm,
+              ## sites=sites,
+              site.type = site.type,
+              adjsf = adjsf))
+}
+
+
+makeStructFromComm <- function(spec, spp){
+    spp.pre.comm <- spec[, c("Site", spp)]
+    spp.pre.comm <- spp.pre.comm[!apply(spec[, spp], 1,
+                                                  function(x) all(is.na(x))),]
+
+    spp.pre.comm <- spp.pre.comm  %>%
+        group_by(Site) %>%
+        summarise_each(list(mean))
+
+    site.type <- spec$SiteType[match(spp.pre.comm$Site,
+                                     spec$Site)]
+
+    adjsf <- spec$AdjSF[match(spp.pre.comm$Site,
+                             spec$Site)]
+
+    sites <- spp.pre.comm$Site
+
+    comm <- spp.pre.comm
+    comm$Site <- NULL
+    comm <- as.matrix(comm)
+    rownames(comm) <- spp.pre.comm$Site
+    comm[is.na(comm)] <- 0
+    comm <- bipartite::empty(comm)
+
+    list(comm=comm,
+         ## sites=sites,
+         site.type=site.type,
+         adjsf = adjsf)
+}
+
+
+getParComm <- function(parasite){
+    parasite <- aggregate(list(Parasite=spec[, parasite]),
+                          list(GenusSpecies=spec$GenusSpecies,
+                               Site=spec$AltSiteName,
+                               SiteType=spec$SiteType),
+                          function(x) sum(x) / length(x))
+
+    parasite.comm <- samp2site.spp(parasite$Site,
+                                   parasite$GenusSpecies,
+                                   parasite$Parasite)
+    return(parasite.comm)
+}
+
+mod.unifrac <- function (comm, tree)
+{
+  if (is.null(tree$edge.length)) {
+    stop("Tree has no branch lengths, cannot compute UniFrac")
+  }
+  if (!is.rooted(tree)) {
+    stop("Rooted phylogeny required for UniFrac calculation")
+  }
+  comm <- as.matrix(comm)
+  s <- nrow(comm)
+  phylodist <- matrix(NA, s, s)
+  rownames(phylodist) <- rownames(comm)
+  colnames(phylodist) <- rownames(comm)
+  comm_comb <- matrix(NA, s * (s - 1)/2, ncol(comm))
+  colnames(comm_comb) <- colnames(comm)
+  i <- 1
+  for (l in 1:(s - 1)) {
+    for (k in (l + 1):s) {
+      comm_comb[i, ] <- comm[l, ] + comm[k, ]
+      i <- i + 1
+    }
+  }
+  pdcomm <- pd.mod(comm, tree)
+  pdcomm_comb <- pd.mod(comm_comb, tree)
+  i <- 1
+  for (l in 1:(s - 1)) {
+    pdl <- pdcomm[l, "PD"]
+    for (k in (l + 1):s) {
+      pdk <- pdcomm[k, "PD"]
+      pdcomb <- pdcomm_comb[i, "PD"]
+      pdsharedlk <- pdl + pdk - pdcomb
+      phylodist[k, l] = (pdcomb - pdsharedlk)/pdcomb
+      i <- i + 1
+    }
+  }
+  return(as.dist(phylodist))
+}
+
+pd.mod <- function (samp, tree, include.root = TRUE)
+{
+  if (is.null(tree$edge.length)) {
+    stop("Tree has no branch lengths, cannot compute pd")
+  }
+  if (include.root) {
+    if (!is.rooted(tree)) {
+      stop("Rooted tree required to calculate PD with include.root=TRUE argument")
+    }
+    tree <- node.age(tree)
+  }
+  species <- colnames(samp)
+  SR <- rowSums(ifelse(samp > 0, 1, 0))
+  nlocations <- dim(samp)[1]
+  nspecies <- dim(samp)[2]
+  PDs <- rep(NA, nlocations)
+  for (i in 1:nlocations) {
+    present <- species[samp[i, ] > 0]
+    treeabsent <- tree$tip.label[which(!(tree$tip.label %in%
+                                           present))]
+    if (length(present) == 0) {
+      PDs[i] <- 0
+    }
+    else if (length(present) == 1) {
+      if (!is.rooted(tree) || !include.root) {
+        warning("Rooted tree and include.root=TRUE argument required to calculate PD of single-species communities. Single species community assigned PD value of NA.")
+        PDs[i] <- NA
+      }
+      else {
+        PDs[i] <- tree$ages[which(tree$edge[, 2] == which(tree$tip.label ==
+                                                            present)[1])]
+      }
+    }
+    else if (length(treeabsent) == 0) {
+      PDs[i] <- sum(tree$edge.length)
+    }
+    else {
+      sub.tree <- drop.tip(tree, treeabsent)
+      if (include.root) {
+        if (!is.rooted(tree)) {
+          stop("Rooted tree required to calculate PD with include.root=TRUE argument")
+        }
+        sub.tree.depth <- max(node.age(sub.tree)$ages)
+        orig.tree.depth <- max(tree$ages[which(tree$edge[,
+                                                         2] %in% which(tree$tip.label %in% present))])
+        PDs[i] <- sum(sub.tree$edge.length) + (orig.tree.depth -
+                                                 sub.tree.depth)
+      }
+      else {
+        PDs[i] <- sum(sub.tree$edge.length)
+      }
+    }
+  }
+  PDout <- data.frame(PD = PDs, SR = SR)
+  rownames(PDout) <- rownames(samp)
+  return(PDout)
 }
