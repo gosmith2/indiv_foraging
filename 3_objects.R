@@ -233,9 +233,11 @@ phylo <- keep.tip(phy=dated.tree,
                                             %in%
                                               unique(spec$GenusSpecies)])
 
-#co.var.mat <- ape::vcv.phylo(phylo)
+#phylogenetic relatedness matrix
+co.var.mat <- ape::vcv.phylo(phylo)
 
+#phylogenetic distance matrix
 bee.dist <- cophenetic.phylo(phylo)
 
-#save(co.var.mat1, phylo, file="data/covarmatrix_community_1.Rdata")
+save(co.var.mat, phylo, file="data/covarmatrix_community.Rdata")
 save(bee.dist, phylo, file = "data/bee_dist.RData")
