@@ -76,32 +76,6 @@ indivNet_microSB <- BloomSplit(indivNet_micro,spec)
 #================================================
 ## prep matrices for MRMs
 #================================================
-
-spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
-  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
-    return("bloom")
-  } else {
-    if(spec$SFBloomStatus[x] == "before bloom"){
-      return("before bloom")
-    }else{
-      if(spec$SFBloomStatus[x] == "after bloom"){
-        return("after bloom")
-      }else{
-        if(spec$SampleRound[x] %in% c(1,2)){
-          return("before bloom")
-        } else{
-          if(spec$SampleRound[x] %in% c(3,4)){
-            return("bloom")
-          } else{
-            return("after bloom")
-          }
-        }
-      }
-    }
-  }})
-
-spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
-
 #rbcl distance----------------------
 rbcl <- colnames(spec)[grepl("RBCL", colnames(spec))]
 comm.rbcl.indiv <- makeIndivComm(spec, rbcl)
@@ -259,7 +233,7 @@ phylo <- keep.tip(phy=dated.tree,
                                             %in%
                                               unique(spec$GenusSpecies)])
 
-co.var.mat <- ape::vcv.phylo(phylo)
+#co.var.mat <- ape::vcv.phylo(phylo)
 
 bee.dist <- cophenetic.phylo(phylo)
 
