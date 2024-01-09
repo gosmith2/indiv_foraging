@@ -1,16 +1,15 @@
-#3_objects: Construction of objects used in analysis of bee individual - plant 
-  #species networks from FFAR 2019 field data
+## 3_objects: Construction of objects used in analysis of bee
+## individual - plant species networks from FFAR 2019 field data
 
-#Requires packages found in 1_initiation, sources in functions from 2_functions, 
-  #and loads some pre-constructed objects from "data" directory (networks, phylogenetic trees)
+## Requires packages found in 1_initiation, sources in functions from
+## 2_functions, and loads some pre-constructed objects from "data"
+## directory (networks, phylogenetic trees)
 
-
-#load functions
+## load functions
 source('2_functions.R')
 
-#load network data
+## load network data
 load('data/rbclNets.RData')
-#load('data/paraNets.RData')
 load('data/microNets.RData')
 load('data/spec_RBCL_16s.RData')
 load('data/trees.RData')
@@ -18,10 +17,10 @@ load('data/covarmatrix_community.RData')
 
 
 #================================================
-#Tweak objects for use in analysis
+## Tweak objects for use in analysis
 #================================================
 
-#Add a bloom status (pre, during, and post-bloom) column to spec for easier grouping
+## Add a bloom status (pre, during, and post-bloom) column to spec for easier grouping
 spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
   if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
     return("bloom")
@@ -44,9 +43,10 @@ spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
       }
     }
   }})
+
 spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
 
-#remove NAs, save for plotting
+## remove NAs, save for plotting
 indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
   keep.ls <- unlist(lapply(c(1:length(rownames(x))),function(y){
     all(!is.na(x[y,]))
@@ -55,7 +55,7 @@ indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
 })
 save(indivNet_rbcl1,file="data/indivNet_rbcl1.RData")
 
-#make a binary version of the matrices
+## make a binary version of the matrices
 bin_rbcl <- lapply(indivNet_rbcl, function(x){
   x[x>0] <- 1
   return(x)
@@ -64,33 +64,33 @@ bin_micro <- lapply(indivNet_micro, function(x){
   x[x>0] <- 1
   return(x)
 })
-#save these objects for later use
+
+## save these objects for later use
 save(bin_rbcl,file="data/bin_rbcl.RData")
 save(bin_rbcl,file="data/bin_micro.RData")
 
-#split site-level matrixes by bloom status
+## split site-level matrixes by bloom status
 indivNet_rbclSB <- BloomSplit(indivNet_rbcl1,spec)
 indivNet_microSB <- BloomSplit(indivNet_micro,spec)
 
-#
+#================================================
+## prep matrices for MRMs
+#================================================
 
-#================================================
-#prep stuff for MRMs
-#================================================
-#spec.wild$BloomRound <- lapply(1:length(spec.wild$SFBloomStatus), function (x){
-  if(spec.wild$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
+spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
+  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
     return("bloom")
   } else {
-    if(spec.wild$SFBloomStatus[x] == "before bloom"){
+    if(spec$SFBloomStatus[x] == "before bloom"){
       return("before bloom")
     }else{
-      if(spec.wild$SFBloomStatus[x] == "after bloom"){
+      if(spec$SFBloomStatus[x] == "after bloom"){
         return("after bloom")
       }else{
-        if(spec.wild$SampleRound[x] %in% c(1,2)){
+        if(spec$SampleRound[x] %in% c(1,2)){
           return("before bloom")
         } else{
-          if(spec.wild$SampleRound[x] %in% c(3,4)){
+          if(spec$SampleRound[x] %in% c(3,4)){
             return("bloom")
           } else{
             return("after bloom")
@@ -99,7 +99,8 @@ indivNet_microSB <- BloomSplit(indivNet_micro,spec)
       }
     }
   }})
-#spec.wild$SiteBloom <- paste(spec.wild$Site, spec.wild$BloomRound, sep="_")
+
+spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
 
 #rbcl distance----------------------
 rbcl <- colnames(spec)[grepl("RBCL", colnames(spec))]
