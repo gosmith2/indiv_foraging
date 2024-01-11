@@ -15,16 +15,15 @@ load('data/spec_RBCL_16s.RData')
 load('data/trees.RData')
 load('data/covarmatrix_community.RData')
 
-
-#================================================
-## Tweak objects for use in analysis
-#================================================
+## ================================================
+## create bloom status groupings
+## ================================================
 
 ## Add a bloom status (pre, during, and post-bloom) column to spec for
 ## easier grouping
 spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
-  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom",
-                                   "ending bloom"))){
+  if(spec$SFBloomStatus[x] %in%
+     c("peak","starting to bloom", "ending bloom")){
     return("bloom")
   } else {
     if(spec$SFBloomStatus[x] == "before bloom"){
@@ -48,8 +47,8 @@ spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
 
 spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
 
-## remove rows of all NAs, save for plotting
-indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
+## remove rows of all NAs
+indivNet_rbcl1 <- lapply(indivNet_rbcl, function(x){
   keep.ls <- unlist(lapply(c(1:length(rownames(x))),function(y){
     all(!is.na(x[y,]))
   }))
@@ -57,8 +56,7 @@ indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
 })
 save(indivNet_rbcl1,file="data/indivNet_rbcl1.RData")
 
-## make a binary version of the rbcl and microbial interaction
-## matrices
+## make a binary version of the matrices
 bin_rbcl <- lapply(indivNet_rbcl, function(x){
   x[x > 0] <- 1
   return(x)
@@ -76,35 +74,26 @@ save(bin_rbcl,file="data/bin_micro.RData")
 indivNet_rbclSB <- BloomSplit(indivNet_rbcl1,spec)
 indivNet_microSB <- BloomSplit(indivNet_micro,spec)
 
-#================================================
+## ================================================
 ## prep matrices for MRMs
-#================================================
-## rbcl distance across all sites, includes Apis mellifera
+## ================================================
 
+## rbcl distance matrices, all sites
 rbcl <- colnames(spec)[grepl("RBCL", colnames(spec))]
 comm.rbcl.indiv <- makeIndivComm(spec, rbcl)
-
 dist.rbcl <- as.matrix(vegan::vegdist(comm.rbcl.indiv,
                                       "altGower"))
 
-## Optional for Lauren: remove honeybees from rbcl dist
-## no.apis <- spec$UniqueID[spec$GenusSpecies=="Apis mellifera"]
-
-## dist.rbcl.NHB <- dist.rbcl[!rownames(dist.rbcl) %in% no.apis,
-##                            !colnames(dist.rbcl) %in% no.apis]
-
-
-# make a version of the above without sunflower
-comm.rbcl.indiv.NOSF <- makeIndivComm(spec, rbcl[rbcl !=
-                                                 "RBCL:Asteraceae_Helianthus_annuus"])
+## make a version of the distance matrix without sunflower
+comm.rbcl.indiv.NOSF <- makeIndivComm(spec,
+                                      rbcl[rbcl !=  "RBCL:Asteraceae_Helianthus_annuus"])
 dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
-                                      "altGower"))
+                                           "altGower"))
 
 save(dist.rbcl, dist.rbcl.NOSF, file="data/rbcl_dists.Rdata")
 
-## microbe distance matrices across all sites
+## microbe distance matrices, all sites
 microbes <- colnames(spec)[grepl("16s", colnames(spec))]
-
 comm.microbes.indiv <- makeIndivComm(spec, microbes)
 
 ## TAKES A LONGGGGG TIME
@@ -112,25 +101,19 @@ dist.phylo.microbes <- mod.unifrac(comm.microbes.indiv*100,
                                    tree.16s)
 dist.phylo.microbes <- as.matrix(dist.phylo.microbes)
 
-#list of apidae specimens
-no.apidae <- spec$UniqueID[spec$GenusSpecies=="Apis mellifera"]
+## list of apis specimens
+no.apis <- spec$UniqueID[spec$GenusSpecies == "Apis mellifera"]
 
 ## drop the honeybee specimens
 dist.phylo.microbes <- dist.phylo.microbes[
-  !rownames(dist.phylo.microbes) %in% no.apidae,
-  !colnames(dist.phylo.microbes) %in% no.apidae]
+  !rownames(dist.phylo.microbes) %in% no.apis,
+  !colnames(dist.phylo.microbes) %in% no.apis]
 
-save(dist.phylo.microbes, dist.microbes, file="saved/distmats/indiv_16s.Rdata")
+save(dist.phylo.microbes, dist.microbes, file="data/indiv_16s.Rdata")
 
-#bee community distance between sites------------------------
-bee.commSB <- makeCommStructSB(spec.wild, "GenusSpecies")
-dist.beeSB <- as.matrix(vegdist(bee.commSB$comm,"gower"))
-save(dist.beeSB,file='data/dist.beeSB.RData')
-
-
-#================================================
-#Calculate centroid distances
-#================================================
+##================================================
+## Calculate centroid distances
+##================================================
 #rbcl_dis <- netToDisper(indivNet_rbcl1,spec,'rbcl')
 rbclSB_dis <- netToDisper(indivNet_rbclSB,spec,'rbcl')
 
@@ -191,7 +174,7 @@ quant_distSBCore$loc <- word(quant_distSBCore$site,1,sep="_")
 quant_distSBCore$round <- word(quant_distSBCore$site,2,sep="_")
 
 #exclude observations with fewer than 5 individuals
-quant_distSBCore5 <- quant_distCoreSB[quant_distSBCore$n>4,]
+quant_distSBCore5 <- quant_distSBCore[quant_distSBCore$n>4,]
 save(quant_distSBCore5,file="data/quant_distSBCore5.RData")  
 
 #exclude honeybees as an optional dataframe for testing
