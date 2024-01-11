@@ -21,7 +21,7 @@ fix.white.space <- function(d) {
 }
 
 dat.clean <- function(spec.dat) {
-  #cleans data of common issues from and formatting and blanks
+                                        #cleans data of common issues from and formatting and blanks
   spec.dat$GenusSpecies <- fix.white.space(paste(spec.dat$Genus,
                                                  spec.dat$Species,
                                                  spec.dat$SubSpecies))
@@ -39,7 +39,7 @@ dat.clean <- function(spec.dat) {
 }
 
 dat.dates <- function(spec.dat) {
-  #cleans date data by reformatting
+                                        #cleans date data by reformatting
   spec.dat$Date <- as.Date(spec.dat$Date, format='%m/%d/%y')
   spec.dat$Doy <- as.numeric(strftime(spec.dat$Date, format='%j'))
   spec.dat$Year <- as.numeric(format(spec.dat$Date,'%Y'))
@@ -47,7 +47,7 @@ dat.dates <- function(spec.dat) {
 }
 
 dat.rm.blanks <- function(spec.dat) {
-  #cleans character data by removing blanks
+                                        #cleans character data by removing blanks
   spec.dat <- spec.dat[spec.dat$PlantGenusSpecies != "",]
   spec.dat <- spec.dat[spec.dat$GenusSpecies != "",]
   return(spec.dat)
@@ -56,8 +56,8 @@ dat.rm.blanks <- function(spec.dat) {
 
 illumSplit <- function(data,split,len){
   ##splits illumina data (which has already been attached
-  #to character data) by a split column, then converts the 
-  #data into a list of network objects
+                                        #to character data) by a split column, then converts the 
+                                        #data into a list of network objects
   
   splitList <- lapply(unique(data[,split]),function(x){
     
@@ -77,11 +77,11 @@ illumSplit <- function(data,split,len){
 }
 
 netSums <- function(data, binary=FALSE){
-  #takes a list of network objects (e.g., from 
-  #illumSplit) and calculates summary stats using 
-  #specieslevel. can be calculated either with reads
-  #acting as observations, or by converting the reads
-  #to presence/absence (binary = TRUE)
+                                        #takes a list of network objects (e.g., from 
+                                        #illumSplit) and calculates summary stats using 
+                                        #specieslevel. can be calculated either with reads
+                                        #acting as observations, or by converting the reads
+                                        #to presence/absence (binary = TRUE)
   
   ls <- lapply(names(data),function(x){
     if(binary==FALSE){
@@ -109,13 +109,13 @@ netSums <- function(data, binary=FALSE){
 }
 
 vaznullFromSp <- function(data, iterations, threshold, binary=FALSE, cores){
-  #data should be a nested list: each element in main list should be a list of networks (i.e., species networks within site within a single "data" list object)
-  #iterations is the number of complete null networks
-  #threshold is the minimum number of individuals to have of a given species w/in a site to randomize them.
+                                        #data should be a nested list: each element in main list should be a list of networks (i.e., species networks within site within a single "data" list object)
+                                        #iterations is the number of complete null networks
+                                        #threshold is the minimum number of individuals to have of a given species w/in a site to randomize them.
   
   iter <- c(1:iterations)
   
-  #subset down to site
+                                        #subset down to site
   nets <- mclapply(data,function(x){
     vazSub1(x,threshold=threshold,binary= binary, obs=TRUE)
   },mc.cores=cores)
@@ -133,9 +133,9 @@ vaznullFromSp <- function(data, iterations, threshold, binary=FALSE, cores){
 
 
 vazSub <- function(data, threshold, obs = FALSE, binary){
-  #data should be a single species network
-  #threshold is the minimum number of individuals to randomize
-  #obs is whether or not nulls should be created, or whether the data is just being reorganized
+                                        #data should be a single species network
+                                        #threshold is the minimum number of individuals to randomize
+                                        #obs is whether or not nulls should be created, or whether the data is just being reorganized
   if(obs == FALSE & length(colnames(data))>=threshold){
     if(binary == FALSE){
       sp <- data[(rowSums(data)>0),]
@@ -179,14 +179,14 @@ vazSub <- function(data, threshold, obs = FALSE, binary){
 vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) { 
   ##sub-function
   
-  #down to species
+                                        #down to species
   net <- lapply(data,function(y){
     
-    #if(null=="vaz"){
+                                        #if(null=="vaz"){
     sp <- vazSub(y, threshold=threshold,obs=obs, binary=binary)
-    #} else {
-    #  sp <- basSub(y, threshold=threshold,obs=obs, binary=binary)
-    #}
+                                        #} else {
+                                        #  sp <- basSub(y, threshold=threshold,obs=obs, binary=binary)
+                                        #}
     
     if(length(rownames(sp))<length(rownames(y))){
       extras <- matrix(nrow = (length(rownames(y))-length(rownames(sp))), 
@@ -210,13 +210,13 @@ vazSub1 <- function(data, threshold, obs, binary, visitweight = FALSE) {
 
 
 splvl.dfer <- function(data){ 
-  #builds a df from species level metrics
+                                        #builds a df from species level metrics
   
   do.call(rbind,lapply(c(1:length(data)),function(x){
     
     iteration <- data[[x]]
     
-    #narrow down to site
+                                        #narrow down to site
     site <- lapply(iteration,function(y){
       pol <- y$'higher level'
       pol$UniqueID <- rownames(pol)
@@ -234,7 +234,7 @@ splvl.dfer <- function(data){
 }
 
 splvl.Zer <- function(data, split){
-  #generates a summary z score df from species level network metrics
+                                        #generates a summary z score df from species level network metrics
   
   do.call(rbind,lapply(unique(data[,split]),function(x){
     inter <- subset(data,data[,split]==x)
@@ -268,7 +268,7 @@ splvl.Zer <- function(data, split){
 
 
 zscorer <- function(data, score){
-  #sub-function; calculates z scores
+                                        #sub-function; calculates z scores
   max <- max(data[,score],na.rm=T)
   mean <- mean(data[,score],na.rm=T)
   sd <- sd (data[,score],na.rm=T)
@@ -276,7 +276,7 @@ zscorer <- function(data, score){
 }
 
 build.spNet <- function(data){
-  #sumarizes species level metrics and builds a df
+                                        #sumarizes species level metrics and builds a df
   lapply(data,function(x){
     sps <- lapply(x,function(y){
       sp <- as.data.frame(rowSums(y))
@@ -288,9 +288,9 @@ build.spNet <- function(data){
 }
 
 sum.spNet <- function(data){
-  #summarizes / reorganizes species level network metrics
+                                        #summarizes / reorganizes species level network metrics
   do.call(rbind,lapply(spNets,function(x){
-    #node stats for each sp*site*yr combo
+                                        #node stats for each sp*site*yr combo
     site <- specieslevel(x)
     hl <- site$'higher level'
     hl$SpSiteYr <- rownames(hl)
@@ -301,10 +301,10 @@ sum.spNet <- function(data){
 
 
 build.netlvl<- function(data,metrics, weighted=TRUE){
-  #Builds a df of network level metrics from raw observation data 
-  #data = list of sites, each of which has observations intended to become a network
-  #metrics = list of metrics you  want to calculate
-  #weighted = whether you want appropriate metrics to be weighted
+                                        #Builds a df of network level metrics from raw observation data 
+                                        #data = list of sites, each of which has observations intended to become a network
+                                        #metrics = list of metrics you  want to calculate
+                                        #weighted = whether you want appropriate metrics to be weighted
   
   ls <- lapply(data, function(x){
     nets <- mclapply(x,function(y){
@@ -327,7 +327,7 @@ build.netlvl<- function(data,metrics, weighted=TRUE){
 } 
 
 netlvl.Zer <- function(data){
-  #generates a summary z score df from network level metrics
+                                        #generates a summary z score df from network level metrics
   do.call(rbind,lapply(unique(data$SiteYr),function(x){
     site <- subset(data, data$SiteYr==x)
     metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
@@ -346,7 +346,7 @@ netlvl.Zer <- function(data){
 
 
 build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weighted=TRUE){
-  #returns single dataframe of summary stats for each spsiteyr with more indivs than the threshold  
+                                        #returns single dataframe of summary stats for each spsiteyr with more indivs than the threshold  
   
   iter <- c(1:iterations)
   
@@ -359,7 +359,7 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
     sp <- sp %>% discard(is.null)
   })
   
-  #create list w/ randomized iterations
+                                        #create list w/ randomized iterations
   net.ls <- lapply(iter,function(x){
     thresh <- lapply(data,function(y){
       sp <- lapply(y,function(z){
@@ -375,7 +375,7 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
   nets.ls <- list(observed)
   nets.ls <- c(nets.ls,net.ls)
   
-  #get summary stats for nets.ls
+                                        #get summary stats for nets.ls
   
   sums <- lapply(nets.ls,function(x){
     site <- lapply(x,function(y){
@@ -409,7 +409,7 @@ build.intraNetlvl <- function(data, iterations, threshold, metrics, binary, weig
 
 
 calc.Z <- function(data, split){
-  #calculates z scores
+                                        #calculates z scores
   do.call(rbind,lapply(unique(data[,split]),function(x){
     site <- data[(data[,split]==x),]
     metrics <- lapply(names(site[c(1:(length(site)-2))]),function(y){
@@ -428,7 +428,7 @@ calc.Z <- function(data, split){
 
 
 nullweb = function(ref)
-  #taken from ESM
+                                        #taken from ESM
 {
   ref <- empty(ref)
   ref[ref>0] <- 1
@@ -454,7 +454,7 @@ nullweb = function(ref)
 
 
 colLister <- function(data){
-  #categorizes bee species for this dataset into colors
+                                        #categorizes bee species for this dataset into colors
   cols <- lapply(data,function(x){
     if(str_detect(x,"Melissodes agilis")==TRUE){
       col <- "blue"
@@ -488,9 +488,9 @@ colLister <- function(data){
 
 
 basSub <- function(data, threshold, obs = FALSE, binary){
-  #data should be a single species network
-  #threshold is the minimum number of individuals to randomize
-  #obs is whether or not nulls should be created, or whether the data is just being reorganized
+                                        #data should be a single species network
+                                        #threshold is the minimum number of individuals to randomize
+                                        #obs is whether or not nulls should be created, or whether the data is just being reorganized
   if(obs == FALSE & length(colnames(data))>=threshold){
     if(binary == FALSE){
       sp <- data[(rowSums(data)>0),]
@@ -547,9 +547,9 @@ makeIndivComm <- function(spec, col.sp.names){
   comm.indiv  <- bipartite::empty(comm.indiv)
   return(comm.indiv)
 }
-                        
+
 vaznull.fast <- function(web) {
-  #a faster calculation of vazquez nulls for networks
+                                        #a faster calculation of vazquez nulls for networks
   rs.p <- rowSums(web)/sum(web)
   cs.p <- colSums(web)/sum(web)
   P <- P1 <- tcrossprod(rs.p, cs.p)
@@ -560,12 +560,12 @@ vaznull.fast <- function(web) {
     selc <- floor((sel - 1)/(dim(web)[1])) + 1
     selr <- ((sel - 1)%%dim(web)[1]) + 1
     if (sum(finalmat[, selc]) == 0 | sum(finalmat[selr,
-    ]) == 0) {
+                                                  ]) == 0) {
       finalmat[sel] <- 1
       P[sel] <- 0
     }
     n.int.finalmat <- sum(rowSums(finalmat) > 0) + sum(colSums(finalmat) >
-                                                         0)
+                                                       0)
   }
   conn.remain <- sum(web > 0) - sum(finalmat > 0)
   if (conn.remain > 0) {
@@ -582,7 +582,7 @@ vaznull.fast <- function(web) {
   if (int.remain > 0) {
     add <- sample(which(finalmat > 0),
                   int.remain, prob = P1[which(finalmat >
-                                                0)], replace = TRUE)
+                                              0)], replace = TRUE)
     finalmat[as.numeric(names(table(add)))] <-
       finalmat[as.numeric(names(table(add)))] +
       table(add)
@@ -591,13 +591,13 @@ vaznull.fast <- function(web) {
 }
 
 netToDisper <- function(data, meta, label){
-  #calculates dispersion (in this case centroid distance) from network objects
-  #meta refers to a larger dataset containing metadata for the specimens, not currently used
-  #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
+                                        #calculates dispersion (in this case centroid distance) from network objects
+                                        #meta refers to a larger dataset containing metadata for the specimens, not currently used
+                                        #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
   
   sites <- lapply(names(data), function(x){
-    #print(x)
-    #browser()
+                                        #print(x)
+                                        #browser()
     site.net <- data[[x]] 
     ids <- colnames(site.net)
     
@@ -609,7 +609,7 @@ netToDisper <- function(data, meta, label){
       avgs <- lapply(unique(dis$group), function(y){
         avgDist <- mean(dis$distances[dis$group==y])
         len <- length(dis$distances[dis$group==y])
-        #browser()
+                                        #browser()
         site.data <- data.frame('GenusSpecies'=y,
                                 'avgDist' = avgDist,
                                 'n' = len)
@@ -633,9 +633,9 @@ netToDisper <- function(data, meta, label){
     }
     
     print(x)
-    #if(length(dis)>0){
-    #  print("yup")
-    #}
+                                        #if(length(dis)>0){
+                                        #  print("yup")
+                                        #}
     
   })
   
@@ -644,8 +644,8 @@ netToDisper <- function(data, meta, label){
 }
 
 netToDisperAll <- function(data, label){
-  #calculates dispersion (in this case centroid distance) from network objects
-  #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
+                                        #calculates dispersion (in this case centroid distance) from network objects
+                                        #label refers to a tag for which the dispersions are calculated (e.g., rbcl reads)
   
   sites <- lapply(names(data), function(x){
     site.net <- data[[x]] 
@@ -667,11 +667,11 @@ netToDisperAll <- function(data, label){
 }
 
 netTohub <- function(data,sitelist){
-  #calculates hub score metrics for each network within a "sitelist" object
-  #metrics include degree, closeness, and a number of network motifs describing
-  #highly asymmetrical node arrangements
-  #NOTE: only degree is used in analyses; the motifs (bmotif::mcount) seems to 
-  #depricated
+                                        #calculates hub score metrics for each network within a "sitelist" object
+                                        #metrics include degree, closeness, and a number of network motifs describing
+                                        #highly asymmetrical node arrangements
+                                        #NOTE: only degree is used in analyses; the motifs (bmotif::mcount) seems to 
+                                        #depricated
   sites <- lapply(sitelist,function(x){
     mets <- specieslevel(data[[x]],index=c('degree','closeness'))
     plants <- mets$'lower level'
@@ -686,21 +686,21 @@ netTohub <- function(data,sitelist){
     
     site <- cbind(site,df.met)
     
-    #motifs <- mcount(data[[x]],
-    #                 six_node = T,
-    #                 normalisation = T,
-    #                 mean_weight = T,
-    #                 standard_dev = F)
+                                        #motifs <- mcount(data[[x]],
+                                        #                 six_node = T,
+                                        #                 normalisation = T,
+                                        #                 mean_weight = T,
+                                        #                 standard_dev = F)
     
-    #site$M44 <- (motifs$mean_weight[44] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
-    #site$M38 <- (motifs$mean_weight[38] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
-    #site$M17 <- (motifs$mean_weight[17] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
-    #site$M13 <- (motifs$mean_weight[13] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+                                        #site$M44 <- (motifs$mean_weight[44] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+                                        #site$M38 <- (motifs$mean_weight[38] - mean(motifs$mean_weight[18:44]))/sd(motifs$mean_weight[18:44])
+                                        #site$M17 <- (motifs$mean_weight[17] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
+                                        #site$M13 <- (motifs$mean_weight[13] - mean(motifs$mean_weight[8:17]))/sd(motifs$mean_weight[18:44])
     
-    #site$M44f <- (motifs$frequency[44] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
-    #site$M38f <- (motifs$frequency[38] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
-    #site$M17f <- (motifs$frequency[17] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
-    #site$M13f <- (motifs$frequency[13] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+                                        #site$M44f <- (motifs$frequency[44] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+                                        #site$M38f <- (motifs$frequency[38] - mean(motifs$frequency[18:44]))/sd(motifs$frequency[18:44])
+                                        #site$M17f <- (motifs$frequency[17] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
+                                        #site$M13f <- (motifs$frequency[13] - mean(motifs$frequency[8:17]))/sd(motifs$frequency[18:44])
     
     return(site)
   })
@@ -708,7 +708,7 @@ netTohub <- function(data,sitelist){
 }
 
 netToDeg <- function(data,sitelist){
-  #calculates hub score metric (relative degree) for each network within a "sitelist" object
+                                        #calculates hub score metric (relative degree) for each network within a "sitelist" object
   sites <- lapply(sitelist,function(x){
     mets <- specieslevel(data[[x]],index=c('degree'))
     plants <- mets$'lower level'
@@ -723,7 +723,7 @@ netToDeg <- function(data,sitelist){
 
 ## GGPLOT THEMES
 
-#Call a specific set of ggplot theme elements
+                                        #Call a specific set of ggplot theme elements
 theme_dark_black <- function(base_size=14, base_family="sans") {
   library(grid)
   library(ggthemes)
@@ -751,16 +751,16 @@ theme_dark_black <- function(base_size=14, base_family="sans") {
             legend.direction = "horizontal",
             legend.box = "vetical",
             legend.key.size= unit(0.5, "cm"),
-            #legend.margin = unit(0, "cm"),
+                                        #legend.margin = unit(0, "cm"),
             legend.title = element_text(face="italic", colour = 'white'),
             plot.margin=unit(c(10,5,5,5),"mm"),
             strip.background=element_rect(colour="#2D3A4C",fill="black"),
             strip.text = element_text(face="bold", colour =
-                                        'white')
-    ))
+                                                     'white')
+            ))
 }
 
-#Call a specific set of ggplot theme elements
+                                        #Call a specific set of ggplot theme elements
 theme_ms <- function(base_size=14, base_family="sans") {
   library(grid)
   library(ggthemes)
@@ -789,42 +789,42 @@ theme_ms <- function(base_size=14, base_family="sans") {
             legend.direction = "vertical",
             legend.box = "vetical",
             legend.key.size= unit(0.5, "cm"),
-            #legend.margin = unit(0, "cm"),
+                                        #legend.margin = unit(0, "cm"),
             legend.title = element_text(face="italic", colour = 'black'),
             plot.margin=unit(c(10,5,5,5),"mm"),
             strip.background=element_rect(colour="#2D3A4C",fill="white"),
             strip.text = element_text(face="bold", colour =
-                                        'black')
-    ))
+                                                     'black')
+            ))
 }
 
-#split site-level networks into site+sample round networks
+                                        #split site-level networks into site+sample round networks
 SRsplit <- function(network.list,meta=spec){
   newlist <- do.call(c,lapply(names(network.list),function(x){
-    #browser()
-    #narrow down to just the right site-level network
+                                        #browser()
+                                        #narrow down to just the right site-level network
     site <- network.list[[x]] 
     
     rounds <- lapply(unique(meta$SiteSample[meta$Site==x]), function(y){
       
-      #subset that site network to just specimens collected during a given sample round
+                                        #subset that site network to just specimens collected during a given sample round
       siteround <- site[,colnames(site) %in% meta$UniqueID[meta$SiteSample==y]]
       
-      #drop empty plant levels (but don't break for 1 weird case). EDIT: commented out, not necessary. doesn't change calculations
-      #if(length(colnames(siteround))>0){
-      #  siteround <- siteround[rowSums(siteround)>0,]
-      #}
+                                        #drop empty plant levels (but don't break for 1 weird case). EDIT: commented out, not necessary. doesn't change calculations
+                                        #if(length(colnames(siteround))>0){
+                                        #  siteround <- siteround[rowSums(siteround)>0,]
+                                        #}
       
-      #browser()
+                                        #browser()
       print(y)
-      #print(dim(siteround))
+                                        #print(dim(siteround))
       return(siteround)
     })
-    #name the objects in the rounds list
-    #browser()
+                                        #name the objects in the rounds list
+                                        #browser()
     names(rounds) <- unique(meta$SiteSample[meta$Site==x])
     
-    #remove any networks with dim 0 (i.e., no pollinators)
+                                        #remove any networks with dim 0 (i.e., no pollinators)
     clean.ls <- unlist(lapply(rounds, function(z){
       if(length(colnames(z))==0){
         return(FALSE)
@@ -843,32 +843,26 @@ SRsplit <- function(network.list,meta=spec){
   }))
   return(newlist)
 }
+
 BloomSplit <- function(network.list,meta=spec){
-  newlist <- do.call(c,lapply(names(network.list),function(x){
-    #browser()
-    #narrow down to just the right site-level network
+  newlist <- do.call(c,lapply(names(network.list), function(x){
+    ## narrow down to just the right site-level network
     site <- network.list[[x]] 
     
     rounds <- lapply(unique(meta$SiteBloom[meta$Site==x]), function(y){
       
-      #subset that site network to just specimens collected during a given sample round
-      bloomround <- site[,colnames(site) %in% meta$UniqueID[meta$SiteBloom==y]]
-      
-      #drop empty plant levels (but don't break for 1 weird case). EDIT: commented out, not necessary. doesn't change calculations
-      #if(length(colnames(siteround))>0){
-      #  siteround <- siteround[rowSums(siteround)>0,]
-      #}
-      
-      #browser()
+      ## subset that site network to just specimens collected during a
+      ## given sample round
+      bloomround <- site[,colnames(site) %in%
+                          meta$UniqueID[meta$SiteBloom==y]]
       print(y)
-      #print(dim(siteround))
       return(bloomround)
     })
-    #name the objects in the rounds list
-    #browser()
+    
+    ##name the objects in the rounds list
     names(rounds) <- unique(meta$SiteBloom[meta$Site==x])
     
-    #remove any networks with dim 0 (i.e., no pollinators)
+    ## remove any networks with dim 0 (i.e., no pollinators)
     clean.ls <- unlist(lapply(rounds, function(z){
       if(length(colnames(z))==0){
         return(FALSE)
