@@ -87,6 +87,9 @@ huby5SB.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc
 summary(huby5SB.almer)
   #repeating this analysis with quant_distSB5NHB, quant_distSBCore5, or 
   #quant_distSBCore5NHB as the dataframe does not qualitatively change the output
+  #Similarly, removing the random slope effect of bee species (i.e., changing)
+  #the first random effect term to "(1|GenusSpecies)" also does not effect the 
+  #output.
 
 
 #repeating with a non-phylogenetic lmm gives qualitatively identical results
