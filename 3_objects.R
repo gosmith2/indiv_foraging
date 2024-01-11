@@ -186,12 +186,12 @@ quant_distSBCore$loc <- word(quant_distSBCore$site,1,sep="_")
 quant_distSBCore$round <- word(quant_distSBCore$site,2,sep="_")
 
 #exclude observations with fewer than 5 individuals
-quant_distSBCore5 <- quant_distSB[quant_distSBCore$n>4,]
-#save(quant_distSBCore5,file="data/quant_distSBCore5.RData")  
+quant_distSBCore5 <- quant_distCoreSB[quant_distSBCore$n>4,]
+save(quant_distSBCore5,file="data/quant_distSBCore5.RData")  
 
 #exclude honeybees as an optional dataframe for testing
 quant_distSBCore5NHB <- quant_distSBCore5[quant_distSBCore5$GenusSpecies!="Apis mellifera",]
-#save(quant_distSBCore5NHB,file="data/quant_distSBCore5NHB.RData")  
+save(quant_distSBCore5NHB,file="data/quant_distSBCore5NHB.RData")  
 
 ## **********************************************************************
 ## Generate bee phylogenetic distance matrix from dated tree
