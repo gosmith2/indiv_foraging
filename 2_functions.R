@@ -1137,6 +1137,8 @@ makeCommStructSR <- function(spec.dat, type){
               site.type = site.type,
               adjsf = adjsf))
 }
+
+
 makeCommStructSB <- function(spec.dat, type){
   ## prep site by species matrix
   prep.comm <- aggregate(spec.dat[, type],
