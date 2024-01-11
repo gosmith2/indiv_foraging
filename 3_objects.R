@@ -20,9 +20,11 @@ load('data/covarmatrix_community.RData')
 ## Tweak objects for use in analysis
 #================================================
 
-## Add a bloom status (pre, during, and post-bloom) column to spec for easier grouping
+## Add a bloom status (pre, during, and post-bloom) column to spec for
+## easier grouping
 spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
-  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
+  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom",
+                                   "ending bloom"))){
     return("bloom")
   } else {
     if(spec$SFBloomStatus[x] == "before bloom"){
@@ -46,7 +48,7 @@ spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
 
 spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
 
-## remove NAs, save for plotting
+## remove rows of all NAs, save for plotting
 indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
   keep.ls <- unlist(lapply(c(1:length(rownames(x))),function(y){
     all(!is.na(x[y,]))
@@ -55,13 +57,14 @@ indivNet_rbcl1 <- lapply(indivNet_rbcl,function(x){
 })
 save(indivNet_rbcl1,file="data/indivNet_rbcl1.RData")
 
-## make a binary version of the matrices
+## make a binary version of the rbcl and microbial interaction
+## matrices
 bin_rbcl <- lapply(indivNet_rbcl, function(x){
-  x[x>0] <- 1
+  x[x > 0] <- 1
   return(x)
 })
 bin_micro <- lapply(indivNet_micro, function(x){
-  x[x>0] <- 1
+  x[x > 0] <- 1
   return(x)
 })
 
@@ -76,28 +79,30 @@ indivNet_microSB <- BloomSplit(indivNet_micro,spec)
 #================================================
 ## prep matrices for MRMs
 #================================================
-#rbcl distance----------------------
+## rbcl distance across all sites, includes Apis mellifera
+
 rbcl <- colnames(spec)[grepl("RBCL", colnames(spec))]
 comm.rbcl.indiv <- makeIndivComm(spec, rbcl)
 
 dist.rbcl <- as.matrix(vegan::vegdist(comm.rbcl.indiv,
                                       "altGower"))
 
-##Optional for Lauren: remove honeybees from rbcl dist
-#no.apidae <- spec$UniqueID[spec$GenusSpecies=="Apis mellifera"]
+## Optional for Lauren: remove honeybees from rbcl dist
+## no.apis <- spec$UniqueID[spec$GenusSpecies=="Apis mellifera"]
 
-#dist.rbcl.NHB <- dist.rbcl[!rownames(dist.rbcl) %in% no.apidae, !colnames(dist.rbcl) %in% no.apidae]
+## dist.rbcl.NHB <- dist.rbcl[!rownames(dist.rbcl) %in% no.apis,
+##                            !colnames(dist.rbcl) %in% no.apis]
 
 
-#make a version of the above without sunflower
-comm.rbcl.indiv.NOSF <- makeIndivComm(spec, rbcl[-37])
+# make a version of the above without sunflower
+comm.rbcl.indiv.NOSF <- makeIndivComm(spec, rbcl[rbcl !=
+                                                 "RBCL:Asteraceae_Helianthus_annuus"])
 dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
                                       "altGower"))
 
 save(dist.rbcl, dist.rbcl.NOSF, file="data/rbcl_dists.Rdata")
 
-
-#microbe distance------------------------
+## microbe distance matrices across all sites
 microbes <- colnames(spec)[grepl("16s", colnames(spec))]
 
 comm.microbes.indiv <- makeIndivComm(spec, microbes)

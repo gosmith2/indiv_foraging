@@ -537,6 +537,7 @@ basSub <- function(data, threshold, obs = FALSE, binary){
 }
 
 makeIndivComm <- function(spec, col.sp.names){
+  ## creates an indivudal level matrix, drops rows of all NAs or zeros
   comm.indiv <- spec[, col.sp.names]
   rownames(comm.indiv) <- spec$UniqueID
   ## find those that were not screened to drop them

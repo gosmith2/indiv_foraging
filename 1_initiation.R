@@ -22,6 +22,8 @@ install.packages('ecodist')
 install.packages('stringr')
 install.packages('ape')
 install.packages('picante')
+install.packages("devtools")
+devtools::install_github("paulponcet/oak")
 
 #load libraries
 library(bipartite)
@@ -41,3 +43,4 @@ library(ecodist)
 library(stringr)
 library(ape)
 library(picante)
+library(oak)
