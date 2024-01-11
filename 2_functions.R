@@ -845,12 +845,12 @@ SRsplit <- function(network.list,meta=spec){
 }
 
 BloomSplit <- function(network.list,meta=spec){
+  ## lp walked through
   newlist <- do.call(c,lapply(names(network.list), function(x){
     ## narrow down to just the right site-level network
     site <- network.list[[x]] 
     
     rounds <- lapply(unique(meta$SiteBloom[meta$Site==x]), function(y){
-      
       ## subset that site network to just specimens collected during a
       ## given sample round
       bloomround <- site[,colnames(site) %in%
