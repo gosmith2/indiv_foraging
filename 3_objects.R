@@ -71,8 +71,13 @@ save(bin_rbcl,file="data/bin_rbcl.RData")
 save(bin_rbcl,file="data/bin_micro.RData")
 
 ## split site-level matrixes by bloom status
-indivNet_rbclSB <- BloomSplit(indivNet_rbcl1,spec)
-indivNet_microSB <- BloomSplit(indivNet_micro,spec)
+indivNet_rbclSB <- BloomSplit(indivNet_rbcl1, spec)
+indivNet_microSB <- BloomSplit(indivNet_micro, spec)
+
+indivNet_rbclSB_noHB<- BloomSplit(indivNet_rbcl1,
+                                  spec[spec$GenusSpecies != "Apis mellifera",])
+indivNet_microSB_noHB <- BloomSplit(indivNet_micro,
+                                    spec[spec$GenusSpecies != "Apis mellifera",])
 
 ## ================================================
 ## prep matrices for MRMs
@@ -114,36 +119,35 @@ save(dist.phylo.microbes, dist.microbes, file="data/indiv_16s.Rdata")
 ##================================================
 ## Calculate centroid distances
 ##================================================
-#rbcl_dis <- netToDisper(indivNet_rbcl1,spec,'rbcl')
-rbclSB_dis <- netToDisper(indivNet_rbclSB,spec,'rbcl')
+## uses matrix split by bloom status
+## with honey bees
+rbclSB_dis <- netToDisper(indivNet_rbclSB, spec,'rbcl')
+microSB_dis <- netToDisper(indivNet_microSB, spec,'micro')
 
-#micro_dis <- netToDisper(indivNet_micro,spec,'micro')
-microSB_dis <- netToDisper(indivNet_microSB,spec,'micro')
-
-#bin_rbcl_dis <- netToDisper(bin_rbcl,spec,'rbcl')
-#bin_micro_dis <- netToDisper(bin_micro,spec,'micro')
-
+## without honey bees
+rbclSB_dis_noHB <- netToDisper(indivNet_rbclSB_noHB, spec,'rbcl')
+microSB_dis_noHB <- netToDisper(indivNet_microSB_noHB, spec,'micro')
 
 #================================================
 #Calculate hubScore, merge micro + rbcl
 #================================================
 
-#calculate hub score
+## calculate hub score
 hubySB <- netToDeg(indivNet_rbclSB,names(indivNet_rbclSB))
 hubySB <- hubySB[hubySB$polN>4,] #limit to observations with more than 4 individuals
 save(hubySB,file="data/hubySB.RData")
 
-#combine distance objects, add some organizer columns
+## combine distance objects, add some organizer columns
 quant_distSB <- rbind(microSB_dis,rbclSB_dis)
 quant_distSB$degree <- hubySB$HubDegree[match(quant_distSB$site,hubySB$site,nomatch=NA_integer_)]
 quant_distSB$loc <- word(quant_distSB$site,1,sep="_")
 quant_distSB$round <- word(quant_distSB$site,2,sep="_")
 
-#exclude observations with fewer than 5 individuals
+## exclude observations with fewer than 5 individuals
 quant_distSB5 <- quant_distSB[quant_distSB$n>4,]
 #save(quant_distSB5,file="data/quant_distSB5.RData")  
 
-#exclude honeybees as a dataframe for testing
+## exclude honeybees as a dataframe for testing
 quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies!="Apis mellifera",]
 save(quant_distSB5NHB,file="data/quant_distSB5NHB.RData")  
 

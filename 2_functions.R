@@ -43,36 +43,35 @@ makeIndivComm <- function(spec, col.sp.names){ #
   return(comm.indiv)
 }
 
-netToDisper <- function(data, meta, label){ #
- ## calculates dispersion (in this case centroid distance) from
- ## network objects meta refers to a larger dataset containing
- ## metadata for the specimens, not currently used label refers to a
- ## tag for which the dispersions are calculated (e.g., rbcl reads)
+netToDisper <- function(data, meta, label){ 
+  ## calculates dispersion (in this case centroid distance) from
+  ## network objects meta refers to a larger dataset containing
+  ## metadata for the specimens, not currently used label refers to a
+  ## tag for which the dispersions are calculated (e.g., rbcl reads)
   
   sites <- lapply(names(data), function(x){
     site.net <- data[[x]] 
-    ids <- colnames(site.net)
-    
+    ids <- colnames(site.net)    
     sp.ls <- meta$GenusSpecies[meta$UniqueID %in% ids]
-    
-    if(length(sp.ls)>0){
+
+    if(length(sp.ls) > 0){
       dis <- betadisper(vegdist(t(site.net),na.rm=T),sp.ls,type='centroid')
-      
+
+      ## extract averages and number of individuals for each species
       avgs <- lapply(unique(dis$group), function(y){
-        avgDist <- mean(dis$distances[dis$group==y])
-        len <- length(dis$distances[dis$group==y])
-        site.data <- data.frame('GenusSpecies'=y,
+        avgDist <- mean(dis$distances[dis$group == y])
+        len <- length(dis$distances[dis$group == y])
+        site.data <- data.frame('GenusSpecies' = y,
                                 'avgDist' = avgDist,
                                 'n' = len)
         return(site.data)
       })
-      
-      site.dat <- do.call(rbind,avgs)
-      
+
+      ## combine averages into a dataframe
+      site.dat <- do.call(rbind, avgs)
       site.dat$site <- x
       site.dat$label <- label
       print(x)
-      return(site.dat)
       
     } else {
       site.dat <- data.frame('GenusSpecies'=NA,
@@ -80,13 +79,12 @@ netToDisper <- function(data, meta, label){ #
                              'n' = NA,
                              "site" = x,
                              "label" = label)
-      return(site.dat)
     }
-    
-    print(x)    
+    print(x)
+    return(site.dat)
   })
   
-  return(do.call(rbind,sites))
+  return(do.call(rbind, sites))
   
 }
 
