@@ -144,7 +144,7 @@ quant_distSB$round <- word(quant_distSB$site,2, sep="_")
 
 ## exclude observations with fewer than 5 individuals
 quant_distSB5 <- quant_distSB[quant_distSB$n > 4,]
-#save(quant_distSB5,file="data/quant_distSB5.RData")  
+save(quant_distSB5,file="data/quant_distSB5.RData")  
 
 ## exclude honeybees as a dataframe for testing
 quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies != "Apis mellifera",]
