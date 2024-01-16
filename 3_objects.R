@@ -124,118 +124,69 @@ save(dist.phylo.microbes, dist.microbes, file="data/indiv_16s.Rdata")
 rbclSB_dis <- netToDisper(indivNet_rbclSB, spec,'rbcl')
 microSB_dis <- netToDisper(indivNet_microSB, spec,'micro')
 
-## without honey bees
-rbclSB_dis_noHB <- netToDisper(indivNet_rbclSB_noHB, spec,'rbcl')
-microSB_dis_noHB <- netToDisper(indivNet_microSB_noHB, spec,'micro')
-
-#================================================
-#Calculate hubScore, merge micro + rbcl
-#================================================
+## ================================================
+## Calculate hubScore, merge micro + rbcl
+## ================================================
 
 ## calculate hub score
 hubySB <- netToDeg(indivNet_rbclSB,names(indivNet_rbclSB))
-hubySB <- hubySB[hubySB$polN>4,] #limit to observations with more than 4 individuals
-save(hubySB,file="data/hubySB.RData")
+hubySB <- hubySB[hubySB$polN > 4,] #limit to observations with more than 4 individuals
+save(hubySB, file="data/hubySB.RData")
 
 ## combine distance objects, add some organizer columns
-quant_distSB <- rbind(microSB_dis,rbclSB_dis)
-quant_distSB$degree <- hubySB$HubDegree[match(quant_distSB$site,hubySB$site,nomatch=NA_integer_)]
-quant_distSB$loc <- word(quant_distSB$site,1,sep="_")
-quant_distSB$round <- word(quant_distSB$site,2,sep="_")
+quant_distSB <- rbind(microSB_dis, rbclSB_dis)
+quant_distSB$degree <-
+  hubySB$HubDegree[match(quant_distSB$site,hubySB$site,nomatch=NA_integer_)]
+
+quant_distSB$loc <- word(quant_distSB$site,1, sep="_")
+quant_distSB$round <- word(quant_distSB$site,2, sep="_")
 
 ## exclude observations with fewer than 5 individuals
-quant_distSB5 <- quant_distSB[quant_distSB$n>4,]
+quant_distSB5 <- quant_distSB[quant_distSB$n > 4,]
 #save(quant_distSB5,file="data/quant_distSB5.RData")  
 
 ## exclude honeybees as a dataframe for testing
-quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies!="Apis mellifera",]
+quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies != "Apis mellifera",]
 save(quant_distSB5NHB,file="data/quant_distSB5NHB.RData")  
 
 
-#================================================
-#Repeat object construction with "core" microbes
-#================================================
-#define "core", get full column names of microbial ASVs in these genera
-core.sp <- c("Rosenbergiella", "Pseudomonas", "Gilliamella", "Lactobacillus", "Caulobacter", "Snodgrassella", "Acinetobacter", "Corynebacterium", "Sphingomonas", "Commensalibacter", "Methylobacterium", "Massilia","Stenotrophomonas")
+## ================================================
+## Repeat object construction with "core" microbes
+## ================================================
+## define "core", get full column names of microbial ASVs in these genera
+core.sp <- c("Rosenbergiella", "Pseudomonas", "Gilliamella",
+             "Lactobacillus", "Caulobacter", "Snodgrassella",
+             "Acinetobacter", "Corynebacterium", "Sphingomonas",
+             "Commensalibacter", "Methylobacterium",
+             "Massilia","Stenotrophomonas")
+
 core.ls <- do.call(c,lapply(core.sp,function(x){
                               grep(x,names(spec))
                             }))
 
-#split by new list
+## split by new list
 core.micro.sitebloom <- illumSplit(spec,"SiteBloom",core.ls)
 core.micro.SB <- lapply(core.micro.sitebloom,function(x){
   filt <- x[,colSums(x,na.rm=T)>0]
   return(filt)
 })
 
-#calculate centroid distance
+## calculate centroid distance
 microSB_dis_core <- netToDisper(core.micro.SB,spec,'micro')
 
-#combine core microbial distances with rbcl distances
+## combine core microbial distances with rbcl distances
 quant_distSBCore <- rbind(rbclSB_dis,microSB_dis_core)
-quant_distSBCore$degree <- hubySB$HubDegree[match(quant_distSBCore$site,hubySB$site,nomatch=NA_integer_)]
+quant_distSBCore$degree <-
+  hubySB$HubDegree[match(quant_distSBCore$site,hubySB$site,
+                         nomatch=NA_integer_)]
 quant_distSBCore$loc <- word(quant_distSBCore$site,1,sep="_")
 quant_distSBCore$round <- word(quant_distSBCore$site,2,sep="_")
 
-#exclude observations with fewer than 5 individuals
+## exclude observations with fewer than 5 individuals
 quant_distSBCore5 <- quant_distSBCore[quant_distSBCore$n>4,]
 save(quant_distSBCore5,file="data/quant_distSBCore5.RData")  
 
-#exclude honeybees as an optional dataframe for testing
-quant_distSBCore5NHB <- quant_distSBCore5[quant_distSBCore5$GenusSpecies!="Apis mellifera",]
+## exclude honeybees as an optional dataframe for testing
+quant_distSBCore5NHB <- quant_distSBCore5[
+  quant_distSBCore5$GenusSpecies!="Apis mellifera",]
 save(quant_distSBCore5NHB,file="data/quant_distSBCore5NHB.RData")  
-
-## **********************************************************************
-## Generate bee phylogenetic distance matrix from dated tree
-## **********************************************************************
-## load the compiled tree
-dated.tree <- read.tree("data/calibees-207t-95p-spruceup-chronos-strict-clock-125Ma.tre")
-
-## cleaning so the tips match the species in the dataset
-
-dated.tree$tip.label <- gsub("_BLX\\d+", "", dated.tree$tip.label)
-
-dated.tree$tip.label <- gsub("_", " ", dated.tree$tip.label)
-
-## dated.tree <- drop.tip(dated.tree, dated.tree$tip.label[duplicated(dated.tree$tip.label)])
-
-dated.tree$tip.label[dated.tree$tip.label == "Lasioglossum spE"] <-
-  "Lasioglossum sp. e"
-dated.tree$tip.label[dated.tree$tip.label == "Sphecodes sp"] <-
-  "Sphecodes spp."
-dated.tree$tip.label[dated.tree$tip.label == "Xylocopa sp"] <-
-  "Xylocopa varipuncta"
-dated.tree$tip.label[dated.tree$tip.label == "Ashmeadiella aridula astragali"] <-
-  "Ashmeadiella sp."
-dated.tree$tip.label[dated.tree$tip.label == "Hylaeus mesillae"] <-
-  "Hylaeus morphoD"
-dated.tree$tip.label[dated.tree$tip.label == "Hylaeus rudbeckiae"] <-
-  "Hylaeus morphoC"
-dated.tree$tip.label[dated.tree$tip.label == "Hylaeus bisinuatus"] <-
-  "Hylaeus morphoA"
-dated.tree$tip.label[dated.tree$tip.label == "Hylaeus calvus"] <-
-  "Hylaeus morphoB"
-dated.tree$tip.label[dated.tree$tip.label == "Triepeolus heterurus"] <-
-  "Triepeolus sp. a"
-dated.tree$tip.label[dated.tree$tip.label == "Lasioglossum tegulare"] <-
-  "Lasioglossum tegulariforme"
-
-dated.tree$tip.label[dated.tree$tip.label == "Apis mellifera HC22"] <-
-  "Apis mellifera"
-
-no.tips <- unique(spec$GenusSpecies[!spec$GenusSpecies %in%
-                                      dated.tree$tip.label])
-
-phylo <- keep.tip(phy=dated.tree,
-                  tip= dated.tree$tip.label[dated.tree$tip.label
-                                            %in%
-                                              unique(spec$GenusSpecies)])
-
-#phylogenetic relatedness matrix
-co.var.mat <- ape::vcv.phylo(phylo)
-
-#phylogenetic distance matrix
-bee.dist <- cophenetic.phylo(phylo)
-
-save(co.var.mat, phylo, file="data/covarmatrix_community.Rdata")
-save(bee.dist, phylo, file = "data/bee_dist.RData")
