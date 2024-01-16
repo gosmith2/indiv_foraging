@@ -90,17 +90,20 @@ netToDisper <- function(data, meta, label){
 
 
 netToDeg <- function(data,sitelist){ #
- #calculates hub score metric (relative degree) for each network within a "sitelist" object
-  sites <- lapply(sitelist,function(x){
-    mets <- specieslevel(data[[x]],index=c('degree'))
+ ## calculates hub score metric (relative degree) for each network
+ ## within a "sitelist" object
+  sites <- lapply(sitelist, function(x){
+    mets <- specieslevel(data[[x]], index=c('degree'))
     plants <- mets$'lower level'
     deg <- zscorer(plants,'degree')
-    site <- data.frame('site' = x,"HubDegree" = deg,"plantN" = dim(data[[x]])[[1]],"polN" = dim(data[[x]])[[2]])
+    site <- data.frame('site' = x,"HubDegree" = deg,
+                       "plantN" = dim(data[[x]])[[1]],
+                       "polN" = dim(data[[x]])[[2]])
     
     
     return(site)
   })
-  do.call(rbind,sites)
+  do.call(rbind, sites)
 }
 
 

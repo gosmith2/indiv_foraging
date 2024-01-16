@@ -4,7 +4,7 @@
 
 
 #load in objects 
-load('data/spec_RBCL_16s.RData')
+load('data/spec_RBCL_16s_bloom.RData')
 load('data/quant_distSB5.RData')
 load('data/compSB.filtNHB.RData')
 load('data/covarmatrix_community.Rdata')
@@ -20,31 +20,6 @@ source('2_functions.R')
 #================================================
 
 ###Are micro and rbcl community compositions correlated?
-
-#add organizer columns, generate a list of site+bloom combos
-spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
-  if(spec$SFBloomStatus[x] %in% (c("peak","starting to bloom", "ending bloom"))){
-    return("bloom")
-  } else {
-    if(spec$SFBloomStatus[x] == "before bloom"){
-      return("before bloom")
-    }else{
-      if(spec$SFBloomStatus[x] == "after bloom"){
-        return("after bloom")
-      }else{
-        if(spec$SampleRound[x] %in% c(1,2)){
-          return("before bloom")
-        } else{
-          if(spec$SampleRound[x] %in% c(3,4)){
-            return("bloom")
-          } else{
-            return("after bloom")
-          }
-        }
-      }
-    }
-  }})
-spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
 
 #NEW line removing 2 observations of this one species that was not processed, 
 #which broke MRM for one of the networks

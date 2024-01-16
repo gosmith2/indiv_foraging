@@ -46,6 +46,7 @@ spec$BloomRound <- lapply(1:length(spec$SFBloomStatus), function (x){
   }})
 
 spec$SiteBloom <- paste(spec$Site, spec$BloomRound, sep="_")
+save(spec, file='data/spec_RBCL_16s_bloom.RData')
 
 ## remove rows of all NAs
 indivNet_rbcl1 <- lapply(indivNet_rbcl, function(x){
