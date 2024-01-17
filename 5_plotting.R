@@ -17,7 +17,8 @@ par(mfrow=c(1,1))
 
 
 #Figure 2 A: rbcL (plant) variation by hub score
-ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='rbcl',],aes(x=degree,y=avgDist,col=GenusSpecies))+
+ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='rbcl',],
+       aes(x=degree,y=avgDist,col=GenusSpecies))+
   scale_color_viridis(discrete=TRUE)+
   theme_ms() +
   geom_point() +
@@ -28,7 +29,8 @@ ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='rbcl',],aes(x=degree,y=avgDist,
 
 
 #Figure 2 B: microbial variation by hub score
-ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='micro',],aes(x=degree,y=avgDist,col=GenusSpecies))+
+ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='micro',],
+       aes(x=degree,y=avgDist,col=GenusSpecies))+
   scale_color_viridis(discrete=TRUE)+
   theme_ms() +
   geom_point() +

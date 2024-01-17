@@ -5,6 +5,7 @@
 ## 2_functions, and loads some pre-constructed objects from "data"
 ## directory (networks, phylogenetic trees)
 
+rm(list=ls())
 ## load functions
 source('2_functions.R')
 
@@ -76,9 +77,9 @@ indivNet_rbclSB <- BloomSplit(indivNet_rbcl1, spec)
 indivNet_microSB <- BloomSplit(indivNet_micro, spec)
 
 indivNet_rbclSB_noHB<- BloomSplit(indivNet_rbcl1,
-                                  spec[spec$GenusSpecies != "Apis mellifera",])
+                       spec[spec$GenusSpecies != "Apis mellifera",])
 indivNet_microSB_noHB <- BloomSplit(indivNet_micro,
-                                    spec[spec$GenusSpecies != "Apis mellifera",])
+                        spec[spec$GenusSpecies != "Apis mellifera",])
 
 ## ================================================
 ## prep matrices for MRMs
@@ -92,7 +93,7 @@ dist.rbcl <- as.matrix(vegan::vegdist(comm.rbcl.indiv,
 
 ## make a version of the distance matrix without sunflower
 comm.rbcl.indiv.NOSF <- makeIndivComm(spec,
-                                      rbcl[rbcl !=  "RBCL:Asteraceae_Helianthus_annuus"])
+                        rbcl[rbcl !=  "RBCL:Asteraceae_Helianthus_annuus"])
 dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
                                            "altGower"))
 
@@ -111,11 +112,12 @@ dist.phylo.microbes <- as.matrix(dist.phylo.microbes)
 no.apis <- spec$UniqueID[spec$GenusSpecies == "Apis mellifera"]
 
 ## drop the honeybee specimens
-dist.phylo.microbes <- dist.phylo.microbes[
+dist.phylo.microbes.NHB <- dist.phylo.microbes[
   !rownames(dist.phylo.microbes) %in% no.apis,
   !colnames(dist.phylo.microbes) %in% no.apis]
 
-save(dist.phylo.microbes, dist.microbes, file="data/indiv_16s.Rdata")
+save(dist.phylo.microbes, dist.phylo.microbes.NHB,
+     file="data/indiv_16s.Rdata")
 
 ##================================================
 ## Calculate centroid distances
@@ -131,13 +133,15 @@ microSB_dis <- netToDisper(indivNet_microSB, spec,'micro')
 
 ## calculate hub score
 hubySB <- netToDeg(indivNet_rbclSB,names(indivNet_rbclSB))
-hubySB <- hubySB[hubySB$polN > 4,] #limit to observations with more than 4 individuals
+## limit to observations with more than 4 individuals
+hubySB <- hubySB[hubySB$polN > 4,] 
 save(hubySB, file="data/hubySB.RData")
 
 ## combine distance objects, add some organizer columns
 quant_distSB <- rbind(microSB_dis, rbclSB_dis)
 quant_distSB$degree <-
-  hubySB$HubDegree[match(quant_distSB$site,hubySB$site,nomatch=NA_integer_)]
+  hubySB$HubDegree[match(quant_distSB$site,hubySB$site,
+                         nomatch=NA_integer_)]
 
 quant_distSB$loc <- word(quant_distSB$site,1, sep="_")
 quant_distSB$round <- word(quant_distSB$site,2, sep="_")
@@ -149,7 +153,6 @@ save(quant_distSB5,file="data/quant_distSB5.RData")
 ## exclude honeybees as a dataframe for testing
 quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies != "Apis mellifera",]
 save(quant_distSB5NHB,file="data/quant_distSB5NHB.RData")  
-
 
 ## ================================================
 ## Repeat object construction with "core" microbes

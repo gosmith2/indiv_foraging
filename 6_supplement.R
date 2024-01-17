@@ -27,7 +27,8 @@ length(rownames(sfonly.mat1n[rowSums(sfonly.mat1n,na.rm=T)>0,]))
 #---------------------------
 #Number of margin-captured individuals carrying sunflower pollen 
 #---------------------------
-sfno <- spec %>% filter(TransectType != "SF", Pollen == 1,SFBloomStatus %in% c("peak","starting to bloom","ending bloom"))
+sfno <- spec %>% filter(TransectType != "SF", Pollen == 1,
+                        SFBloomStatus %in% c("peak","starting to bloom","ending bloom"))
 sfno.mat <- as.matrix(sfno[,872:994])
 sfno.mat[sfno.mat>0] <- 1
 sum(sfno.mat[,colnames(sfno.mat)=="RBCL:Asteraceae_Helianthus_annuus"],na.rm=T)
