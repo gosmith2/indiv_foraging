@@ -5,13 +5,10 @@ rm(list=ls())
 
 #load in objects 
 load('data/spec_RBCL_16s_bloom.RData')
-load('data/quant_distSB5.RData')
-## load('data/compSB.filtNHB.RData')
+load('data/quant_distsSB.RData')
 load('data/covarmatrix_community.Rdata')
 load('data/hubySB.RData')
-load('data/indiv_16s.Rdata')
-load("data/rbcl_dists.Rdata")
-load('data/bee_dist.RData')
+load('data/dists_micro_rbcl.Rdata')
 
 source('2_functions.R')
 
