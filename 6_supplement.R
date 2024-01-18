@@ -6,8 +6,7 @@
 
 #load in objects 
 load('data/spec_RBCL_16s.RData')
-load('data/bin_micro.RData')
-load('data/bin_rbcl.RData')
+load('data/bin_nets.RData')
 
 
 #================================================
