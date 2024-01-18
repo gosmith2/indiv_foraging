@@ -19,8 +19,8 @@ source('2_functions.R')
 ## Are micro and rbcl community compositions correlated?
 ## ================================================
 
-# NEW line removing 2 observations of this one species that was not
-#processed, which broke MRM for one of the networks
+# Remove 2 observations of this one species that was not
+#processed
 spec <- spec[spec$GenusSpecies != "Lasioglossum sp. d",]
 
 sitelistSB <- unique(spec$SiteBloom)
@@ -36,22 +36,7 @@ MRMresultsSB$loc <- word(MRMresultsSB$site, 1, sep="_")
 MRMresultsSB$bloom <- word(MRMresultsSB$site, 2, sep="_")
 write.csv(MRMresultsSB, 'MRMtable.csv')
 
-## Above chunk is unchanged. NOTE: dist.SB (bee community composition
-## distance) is in there, but isn't actually called. "bee.dist" is
-## the new species-level phylogenetic distance matrix for bees.
-
-## ## No SF
-## MRMresultsSB.NOSF <-
-##   MRMrunnerSB(sitelistSB,spec,dist.rbcl.NOSF,dist.phylo.microbes,
-##               dist.beeSB)
-## MRMresultsSB.NOSF$hub <-
-##   hubySB$HubDegree[match(MRMresultsSB.NOSF$site,
-##                          hubySB$site)]
-## MRMresultsSB.NOSF$loc <- word(MRMresultsSB.NOSF$site,1,sep="_")
-## MRMresultsSB.NOSF$bloom <- word(MRMresultsSB.NOSF$site,2,sep="_")
-## write.csv(MRMresultsSB.NOSF, 'MRMtable_noSF.csv')
-
-## No SF, bee phylo included
+## Repeating above, excluding sunflower
 MRMresultsSB.NOSFbee <- MRMrunnerSBbee(sitelistSB,
                                        spec,dist.rbcl.NOSF,dist.phylo.microbes,
                                        bee.dist)
@@ -72,16 +57,40 @@ huby5SB.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc
                        A=list(GenusSpecies=co.var.mat)
 )
 summary(huby5SB.almer)
-  #repeating this analysis with quant_distSB5NHB, quant_distSBCore5, or 
-  #quant_distSBCore5NHB as the dataframe does not qualitatively change the output
-  #Similarly, removing the random slope effect of bee species (i.e., changing)
-  #the first random effect term to "(1|GenusSpecies)" also does not effect the 
-  #output.
 
-
-## repeating with a non-phylogenetic lmm gives qualitatively identical results
-hubySB5.lme4 <- lmer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc),
-                     data=quant_distSB5NHB,
-                     control = lmerControl(optimizer = 'bobyqa')
+#Removing the random slope effect of bee species (i.e., changing)
+#the first random effect term to "(1|GenusSpecies)" also does not effect the 
+#output.
+huby5SBNoSlope.almer <- Almer(avgDist~degree*label+(1|GenusSpecies)+(1|round/loc),
+                       data=quant_distSB5NHB,
+                       control = lmerControl(optimizer = 'bobyqa'),
+                       A=list(GenusSpecies=co.var.mat)
 )
-summary(hubySB5.lme4)
+summary(huby5SBNoSlope.almer)
+
+
+#Repeating this analysis with quant_distSB5 (i.e., including honey bees), 
+  #quant_distSBCore5, or quant_distSBCore5NHB as the dataframe does not 
+  #qualitatively change the output. These alternatives (listed as supplemental 
+  #material) are below. 
+huby5SB.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc),
+                       data=quant_distSB5,
+                       control = lmerControl(optimizer = 'bobyqa'),
+                       A=list(GenusSpecies=co.var.mat)
+)
+summary(huby5SB.almer)
+
+
+huby5SBCore.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc),
+                       data=quant_distSBCore5,
+                       control = lmerControl(optimizer = 'bobyqa'),
+                       A=list(GenusSpecies=co.var.mat)
+)
+summary(huby5SBCore.almer)
+
+huby5SBCoreNHB.almer <- Almer(avgDist~degree*label+(1+degree|GenusSpecies)+(1|round/loc),
+                       data=quant_distSBCore5NHB,
+                       control = lmerControl(optimizer = 'bobyqa'),
+                       A=list(GenusSpecies=co.var.mat)
+)
+summary(huby5SBCoreNHB.almer)
