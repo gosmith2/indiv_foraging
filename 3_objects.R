@@ -56,6 +56,7 @@ indivNet_rbcl1 <- lapply(indivNet_rbcl, function(x){
   }))
   return(x[keep.ls,])
 })
+#save networks in this format for plotting
 save(indivNet_rbcl1,file="data/indivNet_rbcl1.RData")
 
 ## make a binary version of the matrices
@@ -69,8 +70,7 @@ bin_micro <- lapply(indivNet_micro, function(x){
 })
 
 ## save these objects for later use
-save(bin_rbcl,file="data/bin_rbcl.RData")
-save(bin_rbcl,file="data/bin_micro.RData")
+save(bin_rbcl, bin_micro,file="data/bin_nets.RData")
 
 ## split site-level matrixes by bloom status
 indivNet_rbclSB <- BloomSplit(indivNet_rbcl1, spec)
@@ -97,13 +97,11 @@ comm.rbcl.indiv.NOSF <- makeIndivComm(spec,
 dist.rbcl.NOSF <- as.matrix(vegan::vegdist(comm.rbcl.indiv.NOSF,
                                            "altGower"))
 
-save(dist.rbcl, dist.rbcl.NOSF, file="data/rbcl_dists.Rdata")
-
 ## microbe distance matrices, all sites
 microbes <- colnames(spec)[grepl("16s", colnames(spec))]
 comm.microbes.indiv <- makeIndivComm(spec, microbes)
 
-## TAKES A LONGGGGG TIME
+## TAKES A LONGGGGG TIME, 4+ hours on some machines
 dist.phylo.microbes <- mod.unifrac(comm.microbes.indiv*100,
                                    tree.16s)
 dist.phylo.microbes <- as.matrix(dist.phylo.microbes)
@@ -117,7 +115,8 @@ dist.phylo.microbes.NHB <- dist.phylo.microbes[
   !colnames(dist.phylo.microbes) %in% no.apis]
 
 save(dist.phylo.microbes, dist.phylo.microbes.NHB,
-     file="data/indiv_16s.Rdata")
+     dist.rbcl, dist.rbcl.NOSF,
+     file="data/dists_micro_rbcl.Rdata")
 
 ##================================================
 ## Calculate centroid distances
@@ -148,11 +147,9 @@ quant_distSB$round <- word(quant_distSB$site,2, sep="_")
 
 ## exclude observations with fewer than 5 individuals
 quant_distSB5 <- quant_distSB[quant_distSB$n > 4,]
-save(quant_distSB5,file="data/quant_distSB5.RData")  
 
 ## exclude honeybees as a dataframe for testing
 quant_distSB5NHB <- quant_distSB5[quant_distSB5$GenusSpecies != "Apis mellifera",]
-save(quant_distSB5NHB,file="data/quant_distSB5NHB.RData")  
 
 ## ================================================
 ## Repeat object construction with "core" microbes
@@ -188,9 +185,14 @@ quant_distSBCore$round <- word(quant_distSBCore$site,2,sep="_")
 
 ## exclude observations with fewer than 5 individuals
 quant_distSBCore5 <- quant_distSBCore[quant_distSBCore$n>4,]
-save(quant_distSBCore5,file="data/quant_distSBCore5.RData")  
 
 ## exclude honeybees as an optional dataframe for testing
 quant_distSBCore5NHB <- quant_distSBCore5[
   quant_distSBCore5$GenusSpecies!="Apis mellifera",]
-save(quant_distSBCore5NHB,file="data/quant_distSBCore5NHB.RData")  
+
+#save all of these quant_dist objects for analysis
+save(quant_distSBCore5NHB,
+     quant_distSBCore5,
+     quant_distSB5,
+     quant_distSB5NHB,
+     file="data/quant_distsSB.RData")  
