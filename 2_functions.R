@@ -188,146 +188,11 @@ BloomSplit <- function(network.list,meta=spec){ #!
   return(newlist)
 }
 
-MRMrunner <- function(sitelist, spec.data, rbcl, micro, bees){
-  ## Runs MRM tests for each network in the site list
-  ## Depricated version
-  siteSR.list <- do.call(rbind,lapply(sitelist,function(x){
-    print(x)
-    
-    ID.list <- spec.data$UniqueID[spec.data$SiteSample==x]
-    
-    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list])<3){
-      
-      res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
-      
-    }else{
-      
-      rbcl.filt <- rbcl[rownames(rbcl) %in%
-                        ID.list,colnames(rbcl) %in%
-                                ID.list]
-      micro.filt <- micro[rownames(micro) %in% ID.list,
-                          colnames(micro) %in% ID.list]
-      
-      summary <- MRM(as.dist(micro.filt) ~ as.dist(rbcl.filt), nperm=10^4)
-      
-      res <- data.frame("site"=x,
-                        "coef" = summary$coef[2],
-                        "p" = summary$coef[4],
-                        "r2" = summary$r.squared[[1]])
-    }
-    
-    return(res)
-  }))
-  
-  return(siteSR.list)
-}
-
-MRMrunnerSB <- function(sitelist, spec.data, rbcl, micro, bees){ 
-  ## Runs MRM tests for each network in the site list. This version is
-  ## the old version used for the last submission, which now gives
-  ## unequal matrix errors
-
-  siteSB.list <- do.call(rbind, lapply(sitelist, function(x){
-    print(x)
-    
-    ID.list <- spec.data$UniqueID[spec.data$SiteBloom == x]
-
-    ## skip networks that are too small
-    if(length(rownames(rbcl)[rownames(rbcl) %in% ID.list]) <3){
-      
-      res <- data.frame("site"=x,"coef" = NA, "p" = NA, "r2"=NA)
-      
-    }else{
-      ## filter to just specimens at the given network
-      rbcl.filt <- rbcl[rownames(rbcl) %in% ID.list,
-                        colnames(rbcl) %in% ID.list]
-      micro.filt <- micro[rownames(micro) %in% ID.list,
-                          colnames(micro) %in% ID.list]
-
-      ## Run an MRM on the filtered matrices
-      summary <- MRM(as.dist(micro.filt) ~ as.dist(rbcl.filt), nperm=10^4)
-
-      ## extract relevant summary data into a 1 row dataframe to
-      ## combine with the rest
-      res <- data.frame("site"=x,
-                        "coef" = summary$coef[2],
-                        "p" = summary$coef[4],
-                        "r2" = summary$r.squared[[1]])
-
-    }
-    
-    return(res)
-  }))
-  
-  return(siteSB.list)
-}
-
-MRMrunnerSB <- function(sitelist, spec.data, rbcl, micro, bees){
-  ## New version resolving the unequal matrix size issue. Doesn't add
-  ## bees to the MRM (the one below this does)
-  
-  siteSB.list <- do.call(rbind, lapply(sitelist, function(x){
-    print(x)
-    
-    ID.list <- spec.data$UniqueID[spec.data$SiteBloom==x]
-    
-    #browser()
-    #site <- spec.data[spec.data$SiteBloom==x,]
-    
-    if(length(rownames(rbcl)[rownames(rbcl)%in%ID.list]) < 3){
-      
-      res <- data.frame("site"=x,'coef' = NA, "p" = NA, "r2"=NA)
-      print("skipped1")
-      
-    }else{
-      print("started")
-
-      rbcl.filt <- rbcl[rownames(rbcl) %in% ID.list,
-                        colnames(rbcl) %in% ID.list]
-      micro.filt <- micro[rownames(micro) %in% ID.list,
-                          colnames(micro) %in% ID.list]
-      
-      micro.filt.sm <- micro.filt[rownames(micro.filt) %in%
-                                  rownames(rbcl.filt),
-                                  colnames(micro.filt) %in%
-                                  colnames(rbcl.filt)]
-      rbcl.filt.sm <- rbcl.filt[rownames(rbcl.filt) %in%
-                                  rownames(micro.filt),
-                                colnames(rbcl.filt) %in%
-                                colnames(micro.filt)]
-      
-      if(length(rownames(rbcl.filt.sm)) < 3){
-        
-        res <- data.frame("site"=x,
-                          "coef" = NA,
-                          "p" = NA,
-                          "r2"= NA)
-        print("skipped2")
-        
-      } else {
-        
-        
-        summary <- MRM(as.dist(micro.filt.sm) ~ as.dist(rbcl.filt.sm),
-                       nperm=10^4)
-        
-        res <- data.frame("site"=x,
-                          "coef" = summary$coef[2],
-                          "p" = summary$coef[4],
-                          "r2" = summary$r.squared[[1]])
-        print("tested")
-      }
-    }
-    
-    return(res)
-  }))
-  
-  return(siteSB.list)
-}
 
 MRMrunnerSBbee <- function(sitelist, spec.data, rbcl, micro, bees){
   ## Runs MRM tests for each network in the site list
   
-  ## Version using the new filtering and including bee phylo in the
+  ## Filters and aligns rbcL and micro networks, includes bee phylo in the
   ## model (when there are multiple bee species present)
   
   siteSB.list <- do.call(rbind,lapply(sitelist,function(x){
@@ -359,15 +224,6 @@ MRMrunnerSBbee <- function(sitelist, spec.data, rbcl, micro, bees){
                                          as.3D = FALSE)
       rbcl.filt.sm <-  aligned.matrices[[1]]
       micro.filt.sm <-  aligned.matrices[[2]]
-      
-      ## micro.filt.sm <- micro.filt[rownames(micro.filt) %in%
-      ##                             rownames(rbcl.filt),
-      ##                             colnames(micro.filt) %in%
-      ##                             colnames(rbcl.filt)]
-      ## rbcl.filt.sm <- rbcl.filt[rownames(rbcl.filt) %in%
-      ##                           rownames(micro.filt),
-      ##                           colnames(rbcl.filt) %in%
-      ##                           colnames(micro.filt)]
       
       if(length(rownames(rbcl.filt.sm)) < 3){
         
