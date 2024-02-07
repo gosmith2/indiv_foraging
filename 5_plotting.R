@@ -4,7 +4,7 @@
 
 
 #load in objects 
-load('data/quant_distSBNHB.RData')
+load('data/quant_distSB.RData')
 load('data/indivNet_rbcl1.RData')
 source('2_functions.R')
 
@@ -25,7 +25,10 @@ ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='rbcl',],
   geom_smooth(method=lm,se=F)+
   #  geom_smooth(method=lm,aes=(x=quant_dist5[quant_dist5$label=='rbcl',]$degree, quant_dist5[quant_dist5$label=='rbcl',]$y=avgDist))+
   ylab("Average distance to rbcL centroid (within species)")+
-  xlab("Z-score of maximum plant degree")
+  xlab("Z-score of maximum plant degree")+
+  labs(col="Pollinator Species")+
+  theme(legend.title = element_text(face="plain"),
+        legend.text = element_text(face="italic"))
 
 
 #Figure 2 B: microbial variation by hub score
@@ -37,4 +40,7 @@ ggplot(quant_distSB5NHB[quant_distSB5NHB$label=='micro',],
   geom_smooth(method=lm,se=F)+
   #  geom_smooth(method=lm,aes=(x=quant_dist5[quant_dist5$label=='rbcl',]$degree, quant_dist5[quant_dist5$label=='rbcl',]$y=avgDist))+
   ylab("Average distance to 16s centroid (within species)")+
-  xlab("Z-score of maximum plant degree")
+  xlab("Z-score of maximum plant degree")+
+  labs(col="Pollinator Species")+
+  theme(legend.title = element_text(face="plain"),
+        legend.text = element_text(face="italic"))
